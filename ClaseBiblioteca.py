@@ -23,6 +23,7 @@ class Biblioteca:
     numero_de_usuarios: que es un contador que se encarga de cuantificar los usuarios que hay almacenados.
     total_de_prestamos: que es un arreglo que contiene a los préstamos que se realizan en la biblioteca.
     numero_de_prestamos: que es un contador que se encargará de cuantificar los préstamos que hay en el arreglo.
+    usuario_autenticado: qué permite identificar cuál de los usuarios registrados se encuentra usando la aplicación.
     CONSTANTES:
     MAX_USUARIOS: que indica cuál es el número máximo de usuarios que pueden ser almacenados por la aplicación.
     MAX_RECURSOS: que indica cuál es el número máximo de recursos que pueden ser almacenados por la aplicación.
@@ -36,6 +37,7 @@ class Biblioteca:
     inventario_de_recursos = np.ndarray
     total_de_usuarios = np.ndarray
     total_de_prestamos = np.ndarray
+    usuario_autenticado = Usuario
 
     #DECLARACIÓN DE LAS CONSTANTES
     MAX_USUARIOS = 200 #Esta constante indica el número máximo de usuarios que pueden ser almacenados.
@@ -53,15 +55,18 @@ class Biblioteca:
         self.total_de_usuarios = np.full((self.MAX_USUARIOS), fill_value = None, dtype = object)
         self.total_de_prestamos = np.full((self.MAX_PRESTAMOS), fill_value = None, dtype = object)
 
-        #USUARIO ADMINISTRADOR
-        self.total_de_usuarios[0] = Usuario("Mateo", "Medellin", 300600200, "m@gmail.com", "m1811", 101)
+        #SE CREA UN PRIMER USUARIO ADMINISTRADOR
+        self.total_de_usuarios[0] = Usuario(nombre_usuario="Mateo", direccion_residencia="Medellin", telefono=300600200, email="m@gmail.com", codigo="m1811", id=101)
         self.total_de_usuarios[0].tipo_de_usuario = Usuario.PERFIL_ADMIN
 
-        #USUARIO BIBLIOTECARIO
-        self.total_de_usuarios[1] = Usuario("Daniel", "Medellin", 300700300, "d@gmail.com", "d123", 102)
+        #SE CREA UN PRIMER USUARIO BIBLIOTECARIO
+        self.total_de_usuarios[1] = Usuario(nombre_usuario="Daniel", direccion_residencia="Medellin", telefono=300700300, email="d@gmail.com", codigo="d123", id=102)
         self.total_de_usuarios[1].tipo_de_usuario = Usuario.PERFIL_BIBLIOTECARIO
         
         self.numero_de_usuarios = 2
+
+        #SE INICIALIZA EL ATRIBUTO QUE PERMITE IDENTIFICAR EL USUARIO QUE SE ENCUENTRA AUTENTICADO
+        self.usuario_autenticado = None #Al principio no hay usuarios autenticados
 
 
     def registrar_recurso (self):
@@ -121,6 +126,8 @@ class Biblioteca:
                 self.numero_de_recursos += 1
         else:
             print("No hay espacio para almacenar un nuevo recurso en este momento.")
+
+        input("Presione Enter para continuar...")
     
     
     def registrar_usuario (self):
@@ -170,6 +177,8 @@ class Biblioteca:
         else:
             print("No hay espacio para almacenar un nuevo usuario en este momento.")
 
+        input("Presione Enter para continuar...")
+
 
     def modificar_info_recurso(self):
         """
@@ -197,7 +206,7 @@ class Biblioteca:
         signatura_nueva = str
         continuar = int
         seleccion = int
-        print("\n*************************************\nSístema de bibliotecas - Modificar recurso\n*************************************")
+        print("\n*************************************\nModificar recurso\n*************************************")
         
         """Se almacena la signatura topográfica 
         que se va a usar para buscar un recurso en específico"""
@@ -291,7 +300,6 @@ class Biblioteca:
                                 self.inventario_de_recursos[num_del_recurso].signatura_topografica = signatura_nueva
                                 break
                             
-
                     #Para modificar la colección del recurso
                     case 4:
                         #Esta variable nos ayuda a elegir una opción
@@ -574,6 +582,8 @@ class Biblioteca:
             #Si escoje 2.No, asignar False a la variable coincidencia para detener el ciclo
             if continuar == 2:
                 coincidencia = False
+        
+        input("Presione Enter para continuar...")
     
     
     def buscar_recurso (self):
@@ -644,16 +654,56 @@ class Biblioteca:
             
             if (not coincidencia):
                 print("No se encontró ningún recurso con esa signatura topográfica.")
+        
+        input("Presione Enter para continuar...")
 
-    def menu_usuario(self):
+    def autenticar_usuario (self):
+        """
+            Este método permite autenticar al usuario. Retorna True si el usuario que desea autenticarse existe. False si no existe o 
+            si la ID o código no coinciden.
+
+            Este método da solución al requerimiento 13 del análisis del problema.
+
+            PARÁMETEROS:
+            Ninguno
+
+            RETORNO:
+            Booleano
+
+            Autor: Mateo Galeano 24/06/2025
+        """
+
+        print("*********************\nAUTENTICACIÓN\n*********************")
+        #Se piden los datos de autenticación
+        id = leer_entero_no_acotado("Ingrese su número de identificación: ")
+        user_code = verificar_cadena_alfanumerica("Ingrese su código de usuario: ")
+
+        #Se recorre el arreglo, buscando al usuario con el nombre y código registrados
+        for controlador_i in range (self.numero_de_usuarios):
+            
+            #Si el ID coincide, se verifica el código
+            if (self.total_de_usuarios[controlador_i].id == id):
+                #Si la contraseña también coincide, entonces se asigna al altibuto usuario_autenticado ese usuario y retorna True
+                if (self.total_de_usuarios[controlador_i].codigo == user_code):
+                    self.usuario_autenticado = self.total_de_usuarios[controlador_i]
+                    print("Usuario autenticado con éxito.")
+                    return True
+                else:
+                    input("La contraseña ingresada es incorrecta. Presione enter para continuar...")
+                    return False
+            
+        #Si no se encuentra al usuario con el nombre ingresado, entonces se retorna False
+        input(f"El ID ingresado ({id}) no coincide con ningún usuario registrado. Presione Enter para continuar...")
+        return False
+
+    def mostrar_menu_usuario_estudiante_y_empleado (self):
         decision = int
         decision = 0
-        while (decision != 5):
-            decision = leer_entero(1, 6, "**************\nMENÚ USUARIO\n**************\nSeleccione una opción:\n1.Consultar y buscar recursos.\n2.Modificar datos personales.\n3.Prestar un recurso.\n4.Devolver un recurso.\n5.verificar su historial de préstamos\n6.Salir.")
+        while (decision != 6):
+            decision = leer_entero(1, 6, "**************\nMENÚ\n**************\nSeleccione una opción:\n1.Consultar y buscar recursos.\n2.Modificar datos personales.\n3.Prestar un recurso.\n4.Devolver un recurso.\n5.Verificar su historial de préstamos.\n6.Cerrar sesión y regresar al menú principal.")
             match decision:
                 case 1:
                     self.buscar_recurso()
-                    input("Presione Enter para regresar al menú principal...")
                 case 2:
                     pass
                 case 3:
@@ -663,47 +713,21 @@ class Biblioteca:
                 case 5:
                     pass
                 case 6:
-                    print("Ejecución finalizada.")
-                    break
+                    print("Sesión cerrada.")
+                    self.usuario_autenticado = None
 
-    def menu_bibliotecario(self):
+    def mostrar_menu_bibliotecario (self):
         decision = int
         decision = 0
-        while (decision != 5):
-            decision = leer_entero(1, 7, "**************\nMENÚ BIBLIOTECARIO\n**************\nSeleccione una opción:\n1.Agregar recursos.\n2.Modificar recurso.\n3.Buscar recurso.\n4.Registrar préstamos y devoluciones.\n5.Consultar el historial de préstamos de un recurso.\n6Consultar el historial de préstamos de un usuario.\n7.Salir.")
+        while (decision != 8):
+            decision = leer_entero(1, 7, "**************\nMENÚ-BIBLIOTECARIO\n**************\nSeleccione una opción:\n1.Agregar recursos.\n2.Modificar recurso.\n3.Buscar recurso.\n4.Registrar préstamo.\n5.Registrar devolución.\n6.Consultar el historial de préstamos de un recurso.\n7.Consultar el historial de préstamos de un usuario.\n8.Cerrar sesión y salir.")
             match decision:
                 case 1:
                     self.registrar_recurso()
-                    input("Presione Enter para regresar al menú principal...")
                 case 2:
                     self.modificar_info_recurso()
                 case 3:
                     self.buscar_recurso()
-                    input("Presione Enter para regresar al menú principal...")
-                case 4:
-                    pass
-                case 5:
-                    pass
-                case 6:
-                    pass
-                case 7:
-                    print("Ejecución finalizada.")
-                    break
-
-    def menu_administrador(self):
-        decision = int
-        decision = 0
-        while (decision != 5):
-            decision = leer_entero(1, 11, "**************\nMENÚ ADMINISTRADOR\n**************\nSeleccione una opción:\n1.Agregar recursos.\n2.Modificar recurso.\n3.Buscar recurso.\n4.Registrar préstamos y devoluciones.\n5.Consultar el historial de préstamos de un recurso.\n6Consultar el historial de préstamos de un usuario.\n7.Agregar usuario.\n8.Modificar usuario.\n9.Eliminar usuario.\n10.Generar reportes del sistema.\n11.Salir.")
-            match decision:
-                case 1:
-                    self.registrar_recurso()
-                    input("Presione Enter para regresar al menú principal...")
-                case 2:
-                    self.modificar_info_recurso()
-                case 3:
-                    self.buscar_recurso()
-                    input("Presione Enter para regresar al menú principal...")
                 case 4:
                     pass
                 case 5:
@@ -713,104 +737,73 @@ class Biblioteca:
                 case 7:
                     pass
                 case 8:
+                    print("Sesión cerrada.")
+                    self.usuario_autenticado = None
+
+    
+    def mostrar_menu_administrador (self):
+        decision = int
+        decision = 0
+        while (decision != 12):
+            decision = leer_entero(1, 12, "**************\nMENÚ-ADMINISTRADOR\n**************\nSeleccione una opción:\n1.Registrar recurso.\n2.Modificar recurso.\n3.Buscar recurso.\n4.Registrar préstamo.\n5.Registrar devolución.\n6.Consultar el historial de préstamos de un recurso.\n7.Consultar el historial de préstamos de un usuario.\n8.Agregar usuario.\n9.Modificar usuario.\n10.Eliminar usuario.\n11.Generar reportes del sistema.\n12.Cerrar sesión y salir.")
+            match decision:
+                case 1:
+                    self.registrar_recurso()
+                case 2:
+                    self.modificar_info_recurso()
+                case 3:
+                    self.buscar_recurso()
+                case 4:
                     pass
+                case 5:
+                    pass
+                case 6:
+                    pass
+                case 7:
+                    pass
+                case 8:
+                    self.registrar_usuario()
                 case 9:
                     pass
                 case 10:
                     pass
                 case 11:
-                    print("Ejecución finalizada.")
-                    break
-                                            
+                    pass
+                case 12:
+                    print("Sesión cerrada.")
+                    self.usuario_autenticado = None
+
     
-    def autenticacion(self):
-            """
-            Este método permite registrar o autenticar al usuario, y según sea el tipode 
-            usuario, mostrar un menú específico con las opciones correspondientes al perfil
-
-            Este método da solución al requerimiento 13 del análisis del problema.
-
-            PARÁMETEROS:
-            Ninguno
-
-            RETORNO:
-            Vacio
-
-            Autor: Mateo Galeano 00/00/2025
-            """
-
-            #Variable de tipo entero para controlar el menú
-            decision = int
-            decision = 0
-
-            #Si el usuario decide registrarse
-            while (decision != 3):
-                decision = leer_entero(1, 3, "Acceda al sistema\n1.Registrarse\n2.Iniciar sesión\n3.Salir")
-                match decision:
-                    case 1:
-                        print("*********************REGISTRARSE*********************")
-                        decision = leer_entero(1, 2, "Seleccione su tipo de usuario:\n1.Estudiante\n2.Empleado")
-                        #Si el tipo de usuario seleccionado es Estudiante
-                        if decision == 1:
-                            self.registrar_usuario()
-                            """Se modifica el tipo de usuario del usuario en la posición self.numero_de_usuarios - 1, 
-                                ya que al finalizar la función registrar_usuario se incrementa el contador de usuarios.
-                                Por eso, se resta 1 para acceder correctamente a la última posición ocupada del arreglo, 
-                                evitando saltar a una posición vacía.
-                            """
-                            self.total_de_usuarios[self.numero_de_usuarios - 1].tipo_de_usuario = Usuario.PERFIL_ESTUDIANTE
-                            input("Presione Enter para regresar al menú principal...")
-                        #Si el tipo de usuario seleccionado es Empleado
-                        elif decision == 2:
-                            self.registrar_usuario()
-                            self.total_de_usuarios[self.numero_de_usuarios - 1].tipo_de_usuario = Usuario.PERFIL_EMPLEADO
-                            input("Presione Enter para regresar al menú principal...")
-
-                    #Si el usuario desea iniciar sesión
-                    case 2:
-                        
-                        print("*********************INICIAR SESIÓN*********************")
-                        
-                        username = verificar_si_esta_vacio("Ingrese su nombre: ")
-                        username = username.lower()
-                        user_code = verificar_cadena_alfanumerica("Ingrese su código: ")
-                        
-                        usuario_encontrado_posicion = int
-                        usuario_encontrado_posicion = 0
-                        usuario_encontrado = bool
-                        usuario_encontrado = False
-                        # Se busca al usuario en el arreglo total_de_usuarios
-                        for contador_i in range(len(self.total_de_usuarios)):
-                            
-                            usuario = self.total_de_usuarios[contador_i] #Se crea una variable "usuario" para facilitar el manejo del código
-                            #Se verifica si la posición del arreglo almacena el valor None, si es así, no se ejecuta el bloque de código
-                            if usuario != None:
-                                if usuario.nombre_usuario.lower() == username and usuario.codigo == user_code:
-                                    usuario_encontrado_posicion = contador_i
-                                    usuario_encontrado = True
-                                    break
-
-                        if usuario_encontrado:
-                            print("Usuario encontrado")
-                            if self.total_de_usuarios[usuario_encontrado_posicion].tipo_de_usuario == Usuario.PERFIL_ESTUDIANTE:
-                                self.menu_usuario()
-                            elif self.total_de_usuarios[usuario_encontrado_posicion].tipo_de_usuario == Usuario.PERFIL_EMPLEADO:
-                                self.menu_usuario()
-                            elif self.total_de_usuarios[usuario_encontrado_posicion].tipo_de_usuario == Usuario.PERFIL_BIBLIOTECARIO:
-                                self.menu_bibliotecario()
-                            elif self.total_de_usuarios[usuario_encontrado_posicion].tipo_de_usuario == Usuario.PERFIL_ADMIN:
-                                self.menu_administrador()
-                            else:
-                                print("Error: El usuario tiene un perfil desconocido.")
-                        else:
-                            print("\nError: Nombre de usuario o código incorrecto.")
-                            input("Presione Enter para continuar...")
-
-                    case 3:
-                        print("*********************Salistes del programa*********************")
-
-
     def main (self):
+        decision = int
+        decision = 0
+        while (decision != 3):
+            decision = leer_entero(1, 3, "*****SISTEMA DE BIBLIOTECA-MENÚ PRINCIPAL*****\nSeleccione una opción:\n1.Registrarse.\n2.Autenticarse.\n3.Finalizar el programa.\n")
+            match decision:
+                case 1:
+                    print("********\nREGISTRO\n********")
+                    decision = leer_entero (1, 2, "Indique su perfil:\n1.ESTUDIANTE.\n2.EMPLEADO.")
+                    if (decision == 1):
+                        self.registrar_usuario()
+                    else:
+                        self.registrar_usuario()
+                        self.total_de_usuarios[self.numero_de_usuarios-1].tipo_de_usuario = Usuario.PERFIL_EMPLEADO
+                
+                case 2:
+                    if (self.autenticar_usuario()):
+                        if (self.usuario_autenticado.tipo_de_usuario == Usuario.PERFIL_ADMIN):
+                            self.mostrar_menu_administrador()
+                        elif (self.usuario_autenticado.tipo_de_usuario == Usuario.PERFIL_BIBLIOTECARIO):
+                            self.mostrar_menu_bibliotecario()
+                        elif (self.usuario_autenticado.tipo_de_usuario == Usuario.PERFIL_EMPLEADO or self.usuario_autenticado.tipo_de_usuario == Usuario.PERFIL_ESTUDIANTE):
+                            self.mostrar_menu_usuario_estudiante_y_empleado()
+                
+                case 3:
+                    print("Programa Finalizado.")
+
+
+
+    def principal (self):
         """
         Este método despliega el menú de la aplicación e invoca a los métodos respectivos de cada opción,
         que en este caso solo engloba a los primeros 4 requerimientos de la entrega No.1 del proyecto
@@ -846,4 +839,40 @@ class Biblioteca:
                     self.buscar_recurso()
                     input("Presione Enter para regresar al menú principal...")
                 case 5:
-                    print("Ejecución finalizada.")  
+                    print("Ejecución finalizada.")
+        """
+        Este método despliega el menú de la aplicación e invoca a los métodos respectivos de cada opción,
+        que en este caso solo engloba a los primeros 4 requerimientos de la entrega No.1 del proyecto
+
+        PARÁMETEROS:
+        Ninguno
+
+        RETORNO:
+        Vacio
+
+        Autor: Diego Candamil 1/05/2025
+        """
+
+        """
+        Se declara una variable entera llamada "menu", que permite controlar el ciclo
+        """
+        menu = int
+        menu = 0
+        while (menu != 5):
+            menu = leer_entero(1, 5, "**************\nMENÚ PRINCIPAL\n**************\nSeleccione una opción:\n1.Registrar un recurso.\n2.Registrar un usuario.\n3.Modificar recurso.\n4.Consultar recurso.\n5.Salir.")
+            match menu:
+                case 1:
+                    self.registrar_recurso()
+                    input("Presione Enter para regresar al menú principal...")
+                    
+                case 2:
+                    self.registrar_usuario()
+                    input("Presione Enter para regresar al menú principal...")
+                case 3:
+                    self.modificar_info_recurso()
+                    input("Presione Enter para regresar al menú principal...")
+                case 4:
+                    self.buscar_recurso()
+                    input("Presione Enter para regresar al menú principal...")
+                case 5:
+                    print("Ejecución finalizada.")
