@@ -853,8 +853,8 @@ class Biblioteca:
                 #Para indicar que el recurso fue modificado
                 print("La información del usuario fue modificada con éxito.")
 
-                #Variable para saber si el usuario desea modificar otro atributo del recurso
-                continuar = leer_entero(1, 2, "¿Desea modificar otro atributo del recurso? 1.Si 2.No: ")
+                #Variable para saber si el administrador desea modificar otro atributo del rusuario
+                continuar = leer_entero(1, 2, "¿Desea modificar otro atributo del usuario? 1.Si 2.No: ")
                 #Si escoje 2.No, asignar False a la variable coincidencia para detener el ciclo
                 if continuar == 2:
                     posicion = None
@@ -906,10 +906,10 @@ class Biblioteca:
                         self.usuario_autenticado.id = id
 
                 #Para indicar que el recurso fue modificado
-                print("La información del recurso fue modificada con éxito.")
+                print("La información del usuario fue modificada con éxito.")
 
-                #Variable para saber si el usuario desea modificar otro atributo del recurso
-                continuar = leer_entero(1, 2, "¿Desea modificar otro atributo del recurso? 1.Si 2.No: ")
+                #Variable para saber si el usuario desea modificar otro atributo
+                continuar = leer_entero(1, 2, "¿Desea modificar otro atributo del usuario? 1.Si 2.No: ")
                 #Si escoje 2.No, asignar False a la variable coincidencia para detener el ciclo
                 if continuar == 2:
                     kiki = False
