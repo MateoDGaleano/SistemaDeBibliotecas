@@ -683,7 +683,7 @@ class Biblioteca:
             
             #Si el ID coincide, se verifica el código
             if (self.total_de_usuarios[controlador_i].id == id):
-                #Si la contraseña también coincide, entonces se asigna al altibuto usuario_autenticado ese usuario y retorna True
+                #Si la contraseña también coincide, entonces se asigna al atributo usuario_autenticado ese usuario y retorna True
                 if (self.total_de_usuarios[controlador_i].codigo == user_code):
                     self.usuario_autenticado = self.total_de_usuarios[controlador_i]
                     print("Usuario autenticado con éxito.")
@@ -700,12 +700,12 @@ class Biblioteca:
         decision = int
         decision = 0
         while (decision != 6):
-            decision = leer_entero(1, 6, "**************\nMENÚ\n**************\nSeleccione una opción:\n1.Consultar y buscar recursos.\n2.Modificar datos personales.\n3.Prestar un recurso.\n4.Devolver un recurso.\n5.Verificar su historial de préstamos.\n6.Cerrar sesión y regresar al menú principal.")
+            decision = leer_entero(1, 6, "**************\nMENÚ\n**************\nSeleccione una opción:\n1.Consultar y buscar recursos.\n2.Modificar datos personales.\n3.Prestar un recurso.\n4.Devolver un recurso.\n5.Verificar historial de préstamos.\n6.Cerrar sesión y regresar al menú principal.")
             match decision:
                 case 1:
                     self.buscar_recurso()
                 case 2:
-                    pass
+                    self.modificar_info_usuario()
                 case 3:
                     pass
                 case 4:
@@ -739,8 +739,7 @@ class Biblioteca:
                 case 8:
                     print("Sesión cerrada.")
                     self.usuario_autenticado = None
-
-    
+ 
     def mostrar_menu_administrador (self):
         decision = int
         decision = 0
@@ -764,7 +763,7 @@ class Biblioteca:
                 case 8:
                     self.registrar_usuario()
                 case 9:
-                    pass
+                    self.modificar_info_usuario()
                 case 10:
                     pass
                 case 11:
@@ -773,7 +772,151 @@ class Biblioteca:
                     print("Sesión cerrada.")
                     self.usuario_autenticado = None
 
-    
+    def modificar_info_usuario(self):
+        print("**************\nMODIFICAR-INFORMACIÓN-USUARIO\n**************")
+        #Se crea una variable posicion para almacenar la posicion del usuario encontrado
+        posicion = int
+        posicion = None
+        kiki = bool
+        
+        #Si el tipo de usuario autenticado es administrador, se pide al administrador que ingrese el id del usuario al cual quiere modificar sus datos
+        if (self.usuario_autenticado.tipo_de_usuario) == Usuario.PERFIL_ADMIN:
+            i = int
+            id_para_busqueda = int
+            id_para_busqueda = leer_entero_no_acotado("Ingrese el id del usuario: ")
+
+            #Se busca un un usuario con un id igual al id ingresado
+            for i in range(self.numero_de_usuarios):
+                if id_para_busqueda == self.total_de_usuarios[i].id:
+                    posicion = i
+                    #Muestra la informacion del usuario
+                    print(f"INFORMACIÓN DEL USUARIO\n{self.total_de_usuarios[posicion].nombre_usuario}\n{self.total_de_usuarios[posicion].direccion_residencia}\n{self.total_de_usuarios[posicion].telefono}\n{self.total_de_usuarios[posicion].email}\nCódigo: {self.total_de_usuarios[posicion].codigo}\n{self.total_de_usuarios[posicion].tipo_de_usuario}\nId: {self.total_de_usuarios[posicion].id}")
+
+            #Si no se encontro ningún usuario con el id ingresado, la posición se mantendrá en None y se muestra el siguiente mensaje
+            if posicion == None:
+                print("No existe ningún usuario con el id ingresado.")
+                input("Presione Enter para continuar...")
+                return False
+            
+            #Si se encontro un usuario con el id ingresado, se despliega el siguiente menú
+            while (posicion != None):
+                desicion = int
+                desicion = 0
+
+                print("1.Nombre")
+                print("2.Dirección de residencia")
+                print("3.Número telefónico")
+                print("4.Correo electrónico")
+                print("5.Código")
+                print("6.Número de identificación")
+                print("7.Tipo de usuario")
+                desicion = leer_entero(1, 7, "Seleccion una opción: ")
+                match(desicion):
+                    case 1:
+                        self.total_de_usuarios[posicion].nombre_usuario = verificar_si_esta_vacio("Ingrese nuevo nombre: ")
+                    case 2:
+                        self.total_de_usuarios[posicion].direccion_residencia = verificar_si_esta_vacio("Ingrese la nueva dirección de su residencia: ")
+                    case 3:
+                        self.total_de_usuarios[posicion].telefono = leer_entero_no_acotado("Ingrese nuevo número telefónico: ")
+                    case 4:
+                        self.total_de_usuarios[posicion].email = verificar_email("Ingrese una nueva dirección de correo electrónico: ")
+                    case 5:
+                        self.total_de_usuarios[posicion].codigo = verificar_cadena_alfanumerica("Ingrese nuevo código del usuario: ")
+                    
+                    case 6:
+                        id = int
+                        id = 0
+                        igual = bool
+                        igual = True
+                        #Verifica que no se ingrese un id igual al de otro usuario
+                        while (igual):
+                            id = leer_entero_no_acotado("Ingrese nuevo número de identificación: ")
+                            igual = False
+                            for i in range(self.numero_de_usuarios):
+                                if (id == self.total_de_usuarios[i].id):
+                                    print("Error. Este id pertenece a otro usuario")
+                                    igual = True
+                        #Si el id no es igual al de otro usuario, se le agrega el id al usuario al cual estan modificando sus datos 
+                        self.total_de_usuarios[posicion].id = id
+                    case 7:
+                        tipo = leer_entero(1, 4, "Seleccione el nuevo tipo de usuario\n1.Estudiante\n2.Empleado\n3.Bibliotecario\n4.Administrador\n")
+                        match(tipo):
+                            case 1:
+                                self.total_de_usuarios[posicion].tipo_de_usuario = Usuario.PERFIL_ESTUDIANTE
+                            case 2:
+                                self.total_de_usuarios[posicion].tipo_de_usuario = Usuario.PERFIL_EMPLEADO
+                            case 3:
+                                self.total_de_usuarios[posicion].tipo_de_usuario = Usuario.PERFIL_BIBLIOTECARIO
+                            case 4:
+                                self.total_de_usuarios[posicion].tipo_de_usuario = Usuario.PERFIL_ADMIN
+                
+                #Para indicar que el recurso fue modificado
+                print("La información del recurso fue modificada con éxito.")
+
+                #Variable para saber si el usuario desea modificar otro atributo del recurso
+                continuar = leer_entero(1, 2, "¿Desea modificar otro atributo del recurso? 1.Si 2.No: ")
+                #Si escoje 2.No, asignar False a la variable coincidencia para detener el ciclo
+                if continuar == 2:
+                    posicion = None
+            
+            input("Presione Enter para continuar...")
+
+        #Si el usuario es de tipo estudiante o empleado, se despliega un menú para que modifique su información personal
+        else:
+            #Muestra la informacion del usuario
+            print(f"INFORMACIÓN DEL USUARIO\n{self.usuario_autenticado.nombre_usuario}\n{self.usuario_autenticado.direccion_residencia}\n{self.usuario_autenticado.telefono}\n{self.usuario_autenticado.email}\nCódigo: {self.usuario_autenticado.codigo}\n{self.usuario_autenticado.tipo_de_usuario}\nId: {self.usuario_autenticado.id}")
+            kiki = True
+            i = int
+            while (kiki):
+                desicion = int
+                desicion = 0
+
+                print("1.Nombre")
+                print("2.Dirección de residencia")
+                print("3.Número telefónico")
+                print("4.Correo electrónico")
+                print("5.Código")
+                print("6.Número de identificación")
+                desicion = leer_entero(1, 6, "Seleccion una opción: ")
+                match(desicion):
+                    case 1:
+                        self.usuario_autenticado.nombre_usuario = verificar_si_esta_vacio("Ingrese nuevo nombre: ")
+                    case 2:
+                        self.usuario_autenticado.direccion_residencia = verificar_si_esta_vacio("Ingrese la nueva dirección de su residencia: ")
+                    case 3:
+                        self.usuario_autenticado.telefono = leer_entero_no_acotado("Ingrese nuevo número telefónico: ")
+                    case 4:
+                        self.usuario_autenticado.email = verificar_email("Ingrese una nueva dirección de correo electrónico: ")
+                    case 5:
+                        self.usuario_autenticado.codigo = verificar_cadena_alfanumerica("Ingrese nuevo código del usuario: ")
+                    case 6:
+                        id = int
+                        id = 0
+                        igual = bool
+                        igual = True
+                        #Verifica que no se ingrese un id igual al de otro usuario
+                        while (igual):
+                            id = leer_entero_no_acotado("Ingrese nuevo número de identificación: ")
+                            igual = False
+                            for i in range(self.numero_de_usuarios):
+                                if (id == self.total_de_usuarios[i].id):
+                                    print("Error. Este id pertenece a otro usuario")
+                                    igual = True
+                        #Si el id no es igual al de otro usuario, se le agrega el id al usuario al cual estan modificando sus datos 
+                        self.usuario_autenticado.id = id
+
+                #Para indicar que el recurso fue modificado
+                print("La información del recurso fue modificada con éxito.")
+
+                #Variable para saber si el usuario desea modificar otro atributo del recurso
+                continuar = leer_entero(1, 2, "¿Desea modificar otro atributo del recurso? 1.Si 2.No: ")
+                #Si escoje 2.No, asignar False a la variable coincidencia para detener el ciclo
+                if continuar == 2:
+                    kiki = False
+            
+            input("Presione Enter para continuar...")
+
+
     def main (self):
         decision = int
         decision = 0
