@@ -851,7 +851,7 @@ class Biblioteca:
                                 self.total_de_usuarios[posicion].tipo_de_usuario = Usuario.PERFIL_ADMIN
                 
                 #Para indicar que el recurso fue modificado
-                print("La información del recurso fue modificada con éxito.")
+                print("La información del usuario fue modificada con éxito.")
 
                 #Variable para saber si el usuario desea modificar otro atributo del recurso
                 continuar = leer_entero(1, 2, "¿Desea modificar otro atributo del recurso? 1.Si 2.No: ")
