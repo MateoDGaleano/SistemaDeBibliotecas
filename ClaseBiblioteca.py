@@ -720,7 +720,7 @@ class Biblioteca:
         decision = int
         decision = 0
         while (decision != 8):
-            decision = leer_entero(1, 7, "**************\nMENÚ-BIBLIOTECARIO\n**************\nSeleccione una opción:\n1.Agregar recursos.\n2.Modificar recurso.\n3.Buscar recurso.\n4.Registrar préstamo.\n5.Registrar devolución.\n6.Consultar el historial de préstamos de un recurso.\n7.Consultar el historial de préstamos de un usuario.\n8.Cerrar sesión y salir.")
+            decision = leer_entero(1, 8, "**************\nMENÚ-BIBLIOTECARIO\n**************\nSeleccione una opción:\n1.Agregar recursos.\n2.Modificar recurso.\n3.Buscar recurso.\n4.Registrar préstamo.\n5.Registrar devolución.\n6.Consultar el historial de préstamos de un recurso.\n7.Consultar el historial de préstamos de un usuario.\n8.Cerrar sesión y salir.")
             match decision:
                 case 1:
                     self.registrar_recurso()
@@ -790,7 +790,7 @@ class Biblioteca:
                 if id_para_busqueda == self.total_de_usuarios[i].id:
                     posicion = i
                     #Muestra la informacion del usuario
-                    print(f"INFORMACIÓN DEL USUARIO\n{self.total_de_usuarios[posicion].nombre_usuario}\n{self.total_de_usuarios[posicion].direccion_residencia}\n{self.total_de_usuarios[posicion].telefono}\n{self.total_de_usuarios[posicion].email}\nCódigo: {self.total_de_usuarios[posicion].codigo}\n{self.total_de_usuarios[posicion].tipo_de_usuario}\nId: {self.total_de_usuarios[posicion].id}")
+                    print(f"INFORMACIÓN DEL USUARIO\nNombre: {self.total_de_usuarios[posicion].nombre_usuario}\nDirección: {self.total_de_usuarios[posicion].direccion_residencia}\nTeléfono: {self.total_de_usuarios[posicion].telefono}\nEmail: {self.total_de_usuarios[posicion].email}\nCódigo: {self.total_de_usuarios[posicion].codigo}\nTipo de usuario: {self.total_de_usuarios[posicion].tipo_de_usuario}\nId: {self.total_de_usuarios[posicion].id}")
 
             #Si no se encontro ningún usuario con el id ingresado, la posición se mantendrá en None y se muestra el siguiente mensaje
             if posicion == None:
@@ -864,7 +864,7 @@ class Biblioteca:
         #Si el usuario es de tipo estudiante o empleado, se despliega un menú para que modifique su información personal
         else:
             #Muestra la informacion del usuario
-            print(f"INFORMACIÓN DEL USUARIO\n{self.usuario_autenticado.nombre_usuario}\n{self.usuario_autenticado.direccion_residencia}\n{self.usuario_autenticado.telefono}\n{self.usuario_autenticado.email}\nCódigo: {self.usuario_autenticado.codigo}\n{self.usuario_autenticado.tipo_de_usuario}\nId: {self.usuario_autenticado.id}")
+            print(f"INFORMACIÓN DEL USUARIO\nNombre: {self.usuario_autenticado.nombre_usuario}\nDirección: {self.usuario_autenticado.direccion_residencia}\nTeléfono: {self.usuario_autenticado.telefono}\nEmail: {self.usuario_autenticado.email}\nCódigo: {self.usuario_autenticado.codigo}\nTipo de usuario: {self.usuario_autenticado.tipo_de_usuario}\nId: {self.usuario_autenticado.id}")
             kiki = True
             i = int
             while (kiki):
