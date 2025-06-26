@@ -8,8 +8,10 @@ from ClaseAudio import *
 from ClaseRecurso import *
 from ClaseRevista import *
 from ClaseVideo import *
-# Se importa la clase usuario
+# Se importa la clase usuario, préstamo y multa
 from ClaseUsuario import *
+from ClasePrestamo import *
+from ClaseMulta import *
 #CLASE BIBLIOTECA (PRINCIPAL)
 class Biblioteca:
     """
@@ -21,39 +23,48 @@ class Biblioteca:
     total_de_usuarios: que es un arreglo que contiene a los usuarios registrados de la biblioteca.
     numero_de_recursos: que es un contador que se encarga de cuantificar los recursos hay almacenados en el arreglo.
     numero_de_usuarios: que es un contador que se encarga de cuantificar los usuarios que hay almacenados.
-    total_de_prestamos: que es un arreglo que contiene a los préstamos que se realizan en la biblioteca.
-    numero_de_prestamos: que es un contador que se encargará de cuantificar los préstamos que hay en el arreglo.
-    usuario_autenticado: qué permite identificar cuál de los usuarios registrados se encuentra usando la aplicación.
+    prestamos_activos: que es un arreglo que contiene a los préstamos que se realizan en la biblioteca y se encuentran vigentes.
+    numero_de_prestamos_activos: que es un contador que se encargará de cuantificar los préstamos que hay en el arreglo.
+    usuario_autenticado: que permite identificar cuál de los usuarios registrados se encuentra usando la aplicación.
+    prestamos_inactivos: que es un arreglo que contiene a los préstamos que ya han finalizado.
+    numero_de_prestamos_inactivos: que es un contador que se encargará de cuantificar los préstamos que han finalizado.
+
     CONSTANTES:
     MAX_USUARIOS: que indica cuál es el número máximo de usuarios que pueden ser almacenados por la aplicación.
     MAX_RECURSOS: que indica cuál es el número máximo de recursos que pueden ser almacenados por la aplicación.
-    MAX_PRESTAMOS: que indica cuál es el npumero máximo de préstamos que pueden ser almacenados por la aplicación.
+    MAX_PRESTAMOS: que indica cuál es el número máximo de préstamos que pueden ser almacenados por la aplicación.
+    MAX_PRESTAMOS_INACTIVOS: que indica el número máximo de préstamos que pueden ser almacenados por la aplicación.
     """
 
     #DECLARACIÓN DE LOS ATRIBUTOS
     numero_de_recursos = int
     numero_de_usuarios = int
-    numero_de_prestamos = int
+    numero_de_prestamos_activos = int
+    numero_de_prestamos_inactivos = int
     inventario_de_recursos = np.ndarray
     total_de_usuarios = np.ndarray
-    total_de_prestamos = np.ndarray
+    prestamos_activos = np.ndarray
+    prestamos_inactivos = np.ndarray
     usuario_autenticado = Usuario
 
     #DECLARACIÓN DE LAS CONSTANTES
-    MAX_USUARIOS = 200 #Esta constante indica el número máximo de usuarios que pueden ser almacenados.
-    MAX_RECURSOS = 200 #Esta constante indica el número de recursos que pueden ser almacenados.
-    MAX_PRESTAMOS = 200 #Esta constante indica el número máximo de usuarios que pueden ser almacenados.
+    MAX_USUARIOS = 200 
+    MAX_RECURSOS = 200 
+    MAX_PRESTAMOS = 200 
+    MAX_PRESTAMOS_INACTIVOS = 400
 
     #MÉTODO CONSTRUCTOR DE LA CLASE
-    def __init__ (self, numero_de_recursos = 0, numero_de_usuarios = 0, numero_de_prestamos = 0  ):
+    def __init__ (self, numero_de_recursos = 0, numero_de_usuarios = 2, numero_de_prestamos_activos = 0, numero_de_prestamos_inactivos = 0 ):
         #Cuando se crea el objeto de la clase, los valores por defecto de ambos contadores es cero.
         self.numero_de_recursos = numero_de_recursos
         self.numero_de_usuarios = numero_de_usuarios
-        self.numero_de_prestamos = numero_de_prestamos
+        self.numero_de_prestamos_activos = numero_de_prestamos_activos
+        self.numero_de_prestamos_inactivos = numero_de_prestamos_inactivos
         #Se inicializan los arreglos de objetos de tipos recurso, usuario y préstamo con el valor None por defecto
         self.inventario_de_recursos = np.full((self.MAX_RECURSOS), fill_value = None, dtype = object)
         self.total_de_usuarios = np.full((self.MAX_USUARIOS), fill_value = None, dtype = object)
-        self.total_de_prestamos = np.full((self.MAX_PRESTAMOS), fill_value = None, dtype = object)
+        self.prestamos_activos = np.full((self.MAX_PRESTAMOS), fill_value = None, dtype = object)
+        self.prestamos_inactivos = np.full((self.MAX_PRESTAMOS_INACTIVOS), fill_value = None, dtype = object)
 
         #SE CREA UN PRIMER USUARIO ADMINISTRADOR
         self.total_de_usuarios[0] = Usuario(nombre_usuario="Mateo", direccion_residencia="Medellin", telefono=300600200, email="m@gmail.com", codigo="m1811", id=101)
@@ -63,7 +74,7 @@ class Biblioteca:
         self.total_de_usuarios[1] = Usuario(nombre_usuario="Daniel", direccion_residencia="Medellin", telefono=300700300, email="d@gmail.com", codigo="d123", id=102)
         self.total_de_usuarios[1].tipo_de_usuario = Usuario.PERFIL_BIBLIOTECARIO
         
-        self.numero_de_usuarios = 2
+        self.numero_de_usuarios = numero_de_usuarios
 
         #SE INICIALIZA EL ATRIBUTO QUE PERMITE IDENTIFICAR EL USUARIO QUE SE ENCUENTRA AUTENTICADO
         self.usuario_autenticado = None #Al principio no hay usuarios autenticados
@@ -729,7 +740,30 @@ class Biblioteca:
                 case 3:
                     self.buscar_recurso()
                 case 4:
-                    pass
+                    if (self.numero_de_prestamos_activos < self.MAX_PRESTAMOS):
+                        id_para_busqueda = int
+                        signatura_para_busqueda = str
+                        pos_usuario = int
+                        pos_recurso = int
+                        id_para_busqueda = leer_entero_no_acotado("Ingrese la ID del usuario que desea realizar el préstamo: ")
+                        signatura_para_busqueda = verificar_cadena_alfanumerica("Ingrese la signatura topográfica del recurso que desea prestar: ")
+                        pos_usuario = self.buscar_usuario_por_id(identificacion=id_para_busqueda)
+                        pos_recurso = self.buscar_recurso_por_signatura(signatura=signatura_para_busqueda)
+                        if (pos_recurso == -1 and pos_usuario == -1):
+                            print(f"El usuario con ID: {id_para_busqueda} no fue encontrado.")
+                            print(f"El recurso con signatura topográfica: {signatura_para_busqueda} no fue encontrado.")
+                        elif (pos_recurso == -1 and pos_usuario != -1 ):
+                            print(f"El recurso con signatura topográfica: {signatura_para_busqueda} no fue encontrado.")
+                        elif (pos_recurso != -1 and pos_usuario == -1):
+                            print(f"El usuario con ID: {id_para_busqueda} no fue encontrado.")
+                        elif (pos_recurso != -1 and pos_usuario != -1):
+                            if (self.registrar_prestamo(self.total_de_usuarios[pos_usuario], self.inventario_de_recursos[pos_recurso]) != None):
+                                input("El préstamo fue registrado exitosamente. Presione Enter para continuar...")
+                            else:
+                                input("Presione Enter para continuar...")
+        
+                    else:
+                        input("No hay espacio disponible para registrar nuevos préstamos. Presione Enter para continuar...")
                 case 5:
                     pass
                 case 6:
@@ -753,7 +787,30 @@ class Biblioteca:
                 case 3:
                     self.buscar_recurso()
                 case 4:
-                    pass
+                    if (self.numero_de_prestamos_activos < self.MAX_PRESTAMOS):
+                        id_para_busqueda = int
+                        signatura_para_busqueda = str
+                        pos_usuario = int
+                        pos_recurso = int
+                        id_para_busqueda = leer_entero_no_acotado("Ingrese la ID del usuario que desea realizar el préstamo: ")
+                        signatura_para_busqueda = verificar_cadena_alfanumerica("Ingrese la signatura topográfica del recurso que desea prestar: ")
+                        pos_usuario = self.buscar_usuario_por_id(identificacion=id_para_busqueda)
+                        pos_recurso = self.buscar_recurso_por_signatura(signatura=signatura_para_busqueda)
+                        if (pos_recurso == -1 and pos_usuario == -1):
+                            print(f"El usuario con ID: {id_para_busqueda} no fue encontrado.")
+                            print(f"El recurso con signatura topográfica: {signatura_para_busqueda} no fue encontrado.")
+                        elif (pos_recurso == -1 and pos_usuario != -1 ):
+                            print(f"El recurso con signatura topográfica: {signatura_para_busqueda} no fue encontrado.")
+                        elif (pos_recurso != -1 and pos_usuario == -1):
+                            print(f"El usuario con ID: {id_para_busqueda} no fue encontrado.")
+                        elif (pos_recurso != -1 and pos_usuario != -1):
+                            if (self.registrar_prestamo(self.total_de_usuarios[pos_usuario], self.inventario_de_recursos[pos_recurso]) != None):
+                                input("El préstamo fue registrado exitosamente. Presione Enter para continuar...")
+                            else:
+                                input("Presione Enter para continuar...")
+        
+                    else:
+                        input("No hay espacio disponible para registrar nuevos préstamos. Presione Enter para continuar...")
                 case 5:
                     pass
                 case 6:
@@ -786,20 +843,27 @@ class Biblioteca:
             id_para_busqueda = leer_entero_no_acotado("Ingrese el id del usuario: ")
 
             #Se busca un un usuario con un id igual al id ingresado
-            for i in range(self.numero_de_usuarios):
-                if id_para_busqueda == self.total_de_usuarios[i].id:
-                    posicion = i
-                    #Muestra la informacion del usuario
-                    print(f"INFORMACIÓN DEL USUARIO\nNombre: {self.total_de_usuarios[posicion].nombre_usuario}\nDirección: {self.total_de_usuarios[posicion].direccion_residencia}\nTeléfono: {self.total_de_usuarios[posicion].telefono}\nEmail: {self.total_de_usuarios[posicion].email}\nCódigo: {self.total_de_usuarios[posicion].codigo}\nTipo de usuario: {self.total_de_usuarios[posicion].tipo_de_usuario}\nId: {self.total_de_usuarios[posicion].id}")
-
+            posicion = self.buscar_usuario_por_id(identificacion=id_para_busqueda)
+                    
             #Si no se encontro ningún usuario con el id ingresado, la posición se mantendrá en None y se muestra el siguiente mensaje
-            if posicion == None:
+            if posicion == -1:
                 print("No existe ningún usuario con el id ingresado.")
                 input("Presione Enter para continuar...")
                 return False
             
-            #Si se encontro un usuario con el id ingresado, se despliega el siguiente menú
-            while (posicion != None):
+            #Si se encontro un usuario con el id ingresado, se muestra la información del usuario y se despliega el siguiente menú
+            while (posicion != -1):
+                #Muestra la informacion del usuario
+                print(
+                    f"INFORMACIÓN DEL USUARIO\n"
+                    f"Nombre: {self.total_de_usuarios[posicion].nombre_usuario}\n"
+                    f"Dirección: {self.total_de_usuarios[posicion].direccion_residencia}\n"
+                    f"Teléfono: {self.total_de_usuarios[posicion].telefono}\n"
+                    f"Email: {self.total_de_usuarios[posicion].email}\n"
+                    f"Código: {self.total_de_usuarios[posicion].codigo}\n"
+                    f"Tipo de usuario: {self.total_de_usuarios[posicion].tipo_de_usuario}\n"
+                    f"Id: {self.total_de_usuarios[posicion].id}"
+                )
                 desicion = int
                 desicion = 0
 
@@ -868,9 +932,10 @@ class Biblioteca:
 
                 #Variable para saber si el administrador desea modificar otro atributo del rusuario
                 continuar = leer_entero(1, 2, "¿Desea modificar otro atributo del usuario? 1.Si 2.No: ")
+                print(posicion)
                 #Si escoje 2.No, asignar False a la variable coincidencia para detener el ciclo
                 if continuar == 2:
-                    posicion = None
+                    posicion = -1
             
             input("Presione Enter para continuar...")
 
@@ -901,7 +966,20 @@ class Biblioteca:
                     case 4:
                         self.usuario_autenticado.email = verificar_email("Ingrese una nueva dirección de correo electrónico: ")
                     case 5:
-                        self.usuario_autenticado.codigo = verificar_cadena_alfanumerica("Ingrese nuevo código del usuario: ")
+                        codigo = str
+                        codigo = ""
+                        #Variable para verificar si se encontro un código igual al de otro usuario
+                        kiki = True
+                        #Verifica que no se ingrese un id igual al de otro usuario
+                        while (kiki):
+                            codigo = verificar_cadena_alfanumerica("Ingrese nuevo código del usuario: ")
+                            kiki = False
+                            for i in range(self.numero_de_usuarios):
+                                if (codigo == self.total_de_usuarios[i].codigo):
+                                    print("Error. Este código pertenece a otro usuario")
+                                    kiki = True
+                        #Si el código no es igual al de otro usuario, se le agrega el código al usuario al cual estan modificando sus datos
+                        self.usuario_autenticado.codigo = codigo
                     case 6:
                         id = int
                         id = 0
@@ -928,6 +1006,157 @@ class Biblioteca:
                     kiki = False
             
             input("Presione Enter para continuar...")
+
+    def registrar_prestamo (self, usuario:Usuario, recurso):
+            """
+                Este método permite registrar un préstamo y da solución al requerimiento 13 del análisis del problema.
+
+                PARÁMETEROS:
+                usuario = Usuario
+                recurso = Recurso
+
+                RETORNO:
+                obj = Prestamo
+
+                Autor: Daniel Sánchez Escobar 25/06/2025
+            """
+
+            #Se declaran las variables locales al método
+            objeto = Prestamo
+            objeto = None
+            usuario_que_realiza_el_prestamo = usuario
+            recurso_a_prestar = recurso
+            contador_de_prestamos, i = int, int
+            contador_de_prestamos = 0
+            prestamos_vencidos = int
+            prestamos_vencidos = 0
+            
+            #Se cuentan los préstamos que estén activos y su titular sea el usuario a realizar el préstamo
+            #Adicionalmente, se verifica si hay algún préstamo vencido
+            for i in range (len(self.prestamos_activos)):
+                if (self.prestamos_activos[i] != None):
+                    if (self.prestamos_activos[i].titular_del_prestamo.id == usuario_que_realiza_el_prestamo.id):
+                        contador_de_prestamos += 1
+                    
+                    if (self.prestamos_activos[i].verificar_dias_de_mora() != 0):
+                        prestamos_vencidos += 1
+
+            #Se hacen las verificaciones
+            #Se verifica que el usuario tenga menos de 5 préstamos
+            if (contador_de_prestamos < 5):
+
+                #Se verifica que el usuario sea un estudiante o un empleado
+                if (usuario_que_realiza_el_prestamo.tipo_de_usuario == Usuario.PERFIL_ESTUDIANTE or usuario_que_realiza_el_prestamo.tipo_de_usuario == Usuario.PERFIL_EMPLEADO):
+
+                    #Se verifica que el recurso esté disponible
+                    if (recurso_a_prestar.estado == "DISPONIBLE"):
+
+                        #Se verifica que no haya ningún préstamo vigente y vencido asociado al usuario
+                        if (prestamos_vencidos == 0):
+
+                            #Se verifica que no tenga multas
+                            if (usuario_que_realiza_el_prestamo.numero_de_multas == 0):
+
+                                #Una vez realizadas todas las verificaciones, se crea el objeto préstamo y se asigna
+                                #el tiempo en días permitido para el préstamo, según el perfil y la colección
+                                #luego se guarda en el arreglo de préstamos activos
+                                if (usuario_que_realiza_el_prestamo.tipo_de_usuario == Usuario.PERFIL_ESTUDIANTE):
+                                    if (recurso_a_prestar.coleccion == "GENERAL"):
+                                        objeto = Prestamo(usuario_que_realiza_el_prestamo, recurso_a_prestar, 15)
+                                        self.prestamos_activos[self.numero_de_prestamos_activos] = objeto
+                                        self.numero_de_prestamos_activos += 1
+                                    elif (recurso_a_prestar.coleccion == "RESERVA"):
+                                        objeto = Prestamo(usuario_que_realiza_el_prestamo, recurso_a_prestar, 1)
+                                        self.prestamos_activos[self.numero_de_prestamos_activos] = objeto
+                                        self.numero_de_prestamos_activos += 1
+                                    elif (recurso_a_prestar.coleccion == "HEMEROTECA"):
+                                        objeto = Prestamo(usuario_que_realiza_el_prestamo, recurso_a_prestar, 3)
+                                        self.prestamos_activos[self.numero_de_prestamos_activos] = objeto
+                                        self.numero_de_prestamos_activos += 1
+                                    recurso_a_prestar.estado = "PRESTADO"
+                                elif (usuario_que_realiza_el_prestamo.tipo_de_usuario == Usuario.PERFIL_EMPLEADO):
+                                    if (recurso_a_prestar.coleccion == "GENERAL"):
+                                        objeto = Prestamo(usuario_que_realiza_el_prestamo, recurso_a_prestar)
+                                        self.prestamos_activos[self.numero_de_prestamos_activos] = objeto
+                                        self.numero_de_prestamos_activos += 1
+                                    elif (recurso_a_prestar.coleccion == "RESERVA"):
+                                        objeto = Prestamo(usuario_que_realiza_el_prestamo, recurso_a_prestar, 15)
+                                        self.prestamos_activos[self.numero_de_prestamos_activos] = objeto
+                                        self.numero_de_prestamos_activos += 1
+                                    elif (recurso_a_prestar.coleccion == "HEMEROTECA"):
+                                        objeto = Prestamo(usuario_que_realiza_el_prestamo, recurso_a_prestar, 22)
+                                        self.prestamos_activos[self.numero_de_prestamos_activos] = objeto
+                                        self.numero_de_prestamos_activos += 1
+                                    recurso_a_prestar.estado = "PRESTADO"
+
+                            else:
+                                print("El usuario tiene multas activas.")
+                        else:
+                            print("El usuario tiene préstamos vencidos sin devolver.")
+                    else:
+                        print("El recurso no se encuentra disponible en este momento.")
+                else:
+                    print("El usuario no es estudiante o empleado.")
+            else:
+                print("El usuario ha alcanzado el límite de préstamos simultáneos.")
+            
+            return objeto
+        
+    def buscar_usuario_por_id (self, identificacion):
+        """
+            Este método permite buscar a un usuario por medio de su número de identificación (id), 
+            se utiliza como método auxiliar para la solución del requerimiento 13 del análisis del problema.
+
+            PARÁMETEROS:
+            identificacion: id del usuario a buscar
+
+            RETORNO:
+            Entero
+
+            Autor: Daniel Sánchez Escobar 25/06/2025
+        """
+        #Declaración de variables
+        i = int
+        pos = int
+        pos = -1
+        
+        #El ciclo recorre el arreglo de usuarios, una vez encuentre un id igual al que se busca, lo almacena en pos
+        #Y rompe el ciclo
+        for i in range (self.numero_de_usuarios):
+            if (self.total_de_usuarios[i].id == identificacion):
+                pos = i
+                break
+        
+        #Retorna la posición del usuario en el arreglo
+        return pos
+
+    def buscar_recurso_por_signatura (self, signatura):
+        """
+            Este método permite buscar a un recurso por medio de su signatura topográfica, 
+            se utiliza como método auxiliar para la solución del requerimiento 13 del análisis del problema.
+
+            PARÁMETEROS:
+            signatura: signatura topográfica del recurso a buscar
+
+            RETORNO:
+            Entero
+
+            Autor: Daniel Sánchez Escobar 25/06/2025
+        """
+        #Declaración de variables
+        i = int
+        pos = int
+        pos = -1
+
+        #El ciclo recorre el arreglo de recursos, una vez encuentre una signatura igual a la ingresada como
+        #párametro, almacena la posición en pos y rompe el ciclo
+        for i in range (self.numero_de_recursos):
+            if (self.inventario_de_recursos[i].signatura_topografica == signatura):
+                pos = i
+                break
+        
+        #Retorna la posición
+        return pos
 
 
     def main (self):
