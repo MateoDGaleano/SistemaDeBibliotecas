@@ -821,21 +821,34 @@ class Biblioteca:
                     case 4:
                         self.total_de_usuarios[posicion].email = verificar_email("Ingrese una nueva dirección de correo electrónico: ")
                     case 5:
-                        self.total_de_usuarios[posicion].codigo = verificar_cadena_alfanumerica("Ingrese nuevo código del usuario: ")
+                        codigo = str
+                        codigo = ""
+                        #Variable para verificar si se encontro un código igual al de otro usuario
+                        kiki = True
+                        #Verifica que no se ingrese un id igual al de otro usuario
+                        while (kiki):
+                            codigo = verificar_cadena_alfanumerica("Ingrese nuevo código del usuario: ")
+                            kiki = False
+                            for i in range(self.numero_de_usuarios):
+                                if (codigo == self.total_de_usuarios[i].codigo):
+                                    print("Error. Este código pertenece a otro usuario")
+                                    kiki = True
+                        #Si el código no es igual al de otro usuario, se le agrega el código al usuario al cual estan modificando sus datos
+                        self.total_de_usuarios[posicion].codigo = codigo
                     
                     case 6:
                         id = int
                         id = 0
-                        igual = bool
-                        igual = True
+                        #Variable para verificar si se encontro un id igual al de otro usuario
+                        kiki = True
                         #Verifica que no se ingrese un id igual al de otro usuario
-                        while (igual):
+                        while (kiki):
                             id = leer_entero_no_acotado("Ingrese nuevo número de identificación: ")
-                            igual = False
+                            kiki = False
                             for i in range(self.numero_de_usuarios):
                                 if (id == self.total_de_usuarios[i].id):
                                     print("Error. Este id pertenece a otro usuario")
-                                    igual = True
+                                    kiki = True
                         #Si el id no es igual al de otro usuario, se le agrega el id al usuario al cual estan modificando sus datos 
                         self.total_de_usuarios[posicion].id = id
                     case 7:
