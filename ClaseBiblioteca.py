@@ -54,7 +54,7 @@ class Biblioteca:
     MAX_PRESTAMOS_INACTIVOS = 400
 
     #MÉTODO CONSTRUCTOR DE LA CLASE
-    def __init__ (self, numero_de_recursos = 0, numero_de_usuarios = 2, numero_de_prestamos_activos = 0, numero_de_prestamos_inactivos = 0 ):
+    def __init__ (self, numero_de_recursos = 0, numero_de_usuarios = 3, numero_de_prestamos_activos = 0, numero_de_prestamos_inactivos = 0 ):
         #Cuando se crea el objeto de la clase, los valores por defecto de ambos contadores es cero.
         self.numero_de_recursos = numero_de_recursos
         self.numero_de_usuarios = numero_de_usuarios
@@ -73,6 +73,12 @@ class Biblioteca:
         #SE CREA UN PRIMER USUARIO BIBLIOTECARIO
         self.total_de_usuarios[1] = Usuario(nombre_usuario="Daniel", direccion_residencia="Medellin", telefono=300700300, email="d@gmail.com", codigo="d123", id=102)
         self.total_de_usuarios[1].tipo_de_usuario = Usuario.PERFIL_BIBLIOTECARIO
+
+        #SE CREA UN PRIMER USUARIO ESTUDIANTE
+        self.total_de_usuarios[2] = Usuario(nombre_usuario="Pepe", direccion_residencia="Medellin", telefono=300800400, email="p@gmail.com", codigo="p123", id=103)
+        self.total_de_usuarios[2].tipo_de_usuario = Usuario.PERFIL_ESTUDIANTE
+        self.total_de_usuarios[2].multas_vigentes = ["4000", "5000", "2000", "3000", "6000"]
+        self.total_de_usuarios[2].numero_de_multas = 5
         
         self.numero_de_usuarios = numero_de_usuarios
 
@@ -89,7 +95,7 @@ class Biblioteca:
         Ninguno
 
         RETORNO:
-        Vacio
+        Vacío
 
         Autor: Daniel Sánchez 29/05/2025
         """
@@ -150,9 +156,9 @@ class Biblioteca:
         Ninguno
 
         RETORNO:
-        Vacio
+        Vacío
 
-        Autor: Daniel Sánchez 29/05/2025
+        Autor: Mateo Daniel Galeano Quiñones 29/05/2025
         """ 
         #Se verifica que el total de usuarios en el arreglo no sobrepase la capacidad máxima
         if (self.numero_de_usuarios < self.MAX_USUARIOS):
@@ -202,7 +208,7 @@ class Biblioteca:
         RETORNO:
         Vacio
 
-        Autor: Mateo Galeano 31/05/2025
+        Autor: Mateo Daniel Galeano Quiñones 31/05/2025
         """ 
         signatura_para_busqueda = str
         coincidencia = bool
@@ -830,6 +836,17 @@ class Biblioteca:
                     self.usuario_autenticado = None
 
     def modificar_info_usuario(self):
+        """
+                Este método permite modificar la información de un usuario existente y da solución al requerimiento 9 del análisis del problema.
+
+                PARÁMETEROS:
+                NINGUNO
+
+                RETORNO:
+                Vacío
+
+                Autor: Mateo Daniel Galeano Quiñones 27/06/2025
+            """
         print("**************\nMODIFICAR-INFORMACIÓN-USUARIO\n**************")
         #Se crea una variable posicion para almacenar la posicion del usuario encontrado
         posicion = int
@@ -866,6 +883,8 @@ class Biblioteca:
                 )
                 desicion = int
                 desicion = 0
+                opcion = int
+                opcion = 0
 
                 print("1.Nombre")
                 print("2.Dirección de residencia")
@@ -874,7 +893,8 @@ class Biblioteca:
                 print("5.Código")
                 print("6.Número de identificación")
                 print("7.Tipo de usuario")
-                desicion = leer_entero(1, 7, "Seleccion una opción: ")
+                print("8.Eliminar multa")
+                desicion = leer_entero(1, 8, "Seleccion una opción: ")
                 match(desicion):
                     case 1:
                         self.total_de_usuarios[posicion].nombre_usuario = verificar_si_esta_vacio("Ingrese nuevo nombre: ")
@@ -926,14 +946,58 @@ class Biblioteca:
                                 self.total_de_usuarios[posicion].tipo_de_usuario = Usuario.PERFIL_BIBLIOTECARIO
                             case 4:
                                 self.total_de_usuarios[posicion].tipo_de_usuario = Usuario.PERFIL_ADMIN
+                    case 8:
+                        kiki = True
+                        total_multas = int
+                        total_multas = 0
+                        print("**MULTAS**")
+                        #Se verifica que el usuario sea estudiante o empleado
+                        if (self.total_de_usuarios[posicion].tipo_de_usuario == Usuario.PERFIL_ESTUDIANTE or self.total_de_usuarios[posicion].tipo_de_usuario == Usuario.PERFIL_EMPLEADO):
+                            
+                            #Se verifica que el arreglo tenga multas
+                            if (self.total_de_usuarios[posicion].numero_de_multas > 0):
+                                #Se recorre el arreglo de multas del usuario con el fin de mostrar el valor de cada una
+                                for i in range(self.total_de_usuarios[posicion].numero_de_multas):
+                                    print(f"{i+1}. {self.total_de_usuarios[posicion].multas_vigentes[i]}")
+                                    total_multas += 1
+
+                                #Variable para seleccionar multa a eliminar
+                                opcion = leer_entero(1, total_multas, "Seleccion la multa a eliminar: ")
+                                match(opcion):
+                                    case 1:
+                                        self.total_de_usuarios[posicion].multas_vigentes[opcion - 1] = None
+                                    case 2:
+                                        self.total_de_usuarios[posicion].multas_vigentes[opcion - 1] = None
+                                    case 3:
+                                        self.total_de_usuarios[posicion].multas_vigentes[opcion - 1] = None
+                                    case 4:
+                                        self.total_de_usuarios[posicion].multas_vigentes[opcion - 1] = None
+                                    case 5:
+                                        self.total_de_usuarios[posicion].multas_vigentes[opcion - 1] = None
+
+                                #Ciclo para mover a la izquierda los objetos del arreglo partiendo del objeto eliminado para organizar el arreglo
+                                for i in range(opcion, self.total_de_usuarios[posicion].numero_de_multas):
+                                    if (opcion != self.total_de_usuarios[posicion].numero_de_multas):
+                                        self.total_de_usuarios[posicion].multas_vigentes[i - 1] = self.total_de_usuarios[posicion].multas_vigentes[i]
+                                
+
+                                self.total_de_usuarios[posicion].multas_vigentes[self.total_de_usuarios[posicion].numero_de_multas - 1] = None
+                                self.total_de_usuarios[posicion].numero_de_multas -= 1
+
+         
+                            #Si el arreglo no tiene multas se muestra un mensaje
+                            else:
+                                print("El usuario no tiene multas")
+                        #Si el tipo de usuario es diferente de estudiante o empleado se muestra un mensaje
+                        else:
+                            print("El usuario seleccionado no es de tipo estudiante o empleado")
                 
                 #Para indicar que el recurso fue modificado
                 print("La información del usuario fue modificada con éxito.")
 
-                #Variable para saber si el administrador desea modificar otro atributo del rusuario
+                #Variable para saber si el administrador desea modificar otro atributo del usuario
                 continuar = leer_entero(1, 2, "¿Desea modificar otro atributo del usuario? 1.Si 2.No: ")
-                print(posicion)
-                #Si escoje 2.No, asignar False a la variable coincidencia para detener el ciclo
+                #Si escoge la opción 2, asignar -1 a la variable coincidencia para detener el ciclo
                 if continuar == 2:
                     posicion = -1
             
@@ -1009,7 +1073,7 @@ class Biblioteca:
 
     def registrar_prestamo (self, usuario:Usuario, recurso):
             """
-                Este método permite registrar un préstamo y da solución al requerimiento 13 del análisis del problema.
+                Este método permite registrar un préstamo y da solución al requerimiento 5 del análisis del problema.
 
                 PARÁMETEROS:
                 usuario = Usuario
