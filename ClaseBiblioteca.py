@@ -34,6 +34,11 @@ class Biblioteca:
     MAX_RECURSOS: que indica cuál es el número máximo de recursos que pueden ser almacenados por la aplicación.
     MAX_PRESTAMOS: que indica cuál es el número máximo de préstamos que pueden ser almacenados por la aplicación.
     MAX_PRESTAMOS_INACTIVOS: que indica el número máximo de préstamos que pueden ser almacenados por la aplicación.
+    ARCHIVO_RECURSOS: contiene la ruta del archivo en donde se guardan los recursos.
+    ARCHIVO_USUARIOS: contiene la ruta del archivo en donde se guardan los usuarios. 
+    ARCHIVO_PRESTAMOS_ACTIVOS: contiene la ruta del archivo en donde se guardan los préstamos activos. 
+    ARCHIVO_PRESTAMOS_INACTIVOS: contiene la ruta del archivo en donde se guardan los préstamos inactivos.
+
     """
 
     #DECLARACIÓN DE LOS ATRIBUTOS
@@ -52,10 +57,15 @@ class Biblioteca:
     MAX_RECURSOS = 200 
     MAX_PRESTAMOS = 200 
     MAX_PRESTAMOS_INACTIVOS = 400
+    ARCHIVO_RECURSOS = "archivo_recursos.npy"
+    ARCHIVO_USUARIOS = "archivo_usuarios.npy"
+    ARCHIVO_PRESTAMOS_ACTIVOS = "archivo_prestamos_activos.npy"
+    ARCHIVO_PRESTAMOS_INACTIVOS = "archivo_prestamos_inactivos.npy"
 
-    #MÉTODO CONSTRUCTOR DE LA CLASE
-    def __init__ (self, numero_de_recursos = 0, numero_de_usuarios = 3, numero_de_prestamos_activos = 0, numero_de_prestamos_inactivos = 0 ):
-        #Cuando se crea el objeto de la clase, los valores por defecto de ambos contadores es cero.
+
+    #MÉTODO CONSTRUCTOR DE LA CLASE (ANTIGUO)
+    """def __init__ (self, numero_de_recursos = 0, numero_de_usuarios = 2, numero_de_prestamos_activos = 0, numero_de_prestamos_inactivos = 0 ):
+        #Cuando se crea el objeto de la clase, los valores por defecto de todos los contadores es cero.
         self.numero_de_recursos = numero_de_recursos
         self.numero_de_usuarios = numero_de_usuarios
         self.numero_de_prestamos_activos = numero_de_prestamos_activos
@@ -73,17 +83,92 @@ class Biblioteca:
         #SE CREA UN PRIMER USUARIO BIBLIOTECARIO
         self.total_de_usuarios[1] = Usuario(nombre_usuario="Daniel", direccion_residencia="Medellin", telefono=300700300, email="d@gmail.com", codigo="d123", id=102)
         self.total_de_usuarios[1].tipo_de_usuario = Usuario.PERFIL_BIBLIOTECARIO
-
-        #SE CREA UN PRIMER USUARIO ESTUDIANTE
-        self.total_de_usuarios[2] = Usuario(nombre_usuario="Pepe", direccion_residencia="Medellin", telefono=300800400, email="p@gmail.com", codigo="p123", id=103)
-        self.total_de_usuarios[2].tipo_de_usuario = Usuario.PERFIL_ESTUDIANTE
-        self.total_de_usuarios[2].multas_vigentes = ["4000", "5000", "2000", "3000", "6000"]
-        self.total_de_usuarios[2].numero_de_multas = 5
         
         self.numero_de_usuarios = numero_de_usuarios
 
         #SE INICIALIZA EL ATRIBUTO QUE PERMITE IDENTIFICAR EL USUARIO QUE SE ENCUENTRA AUTENTICADO
         self.usuario_autenticado = None #Al principio no hay usuarios autenticados
+    """
+
+    #NUEVO MÉTODO CONSTRUCTOR DE LA CLASE
+    def __init__ (self):
+        # Se cargan los datos de cada arreglo y cada contador
+
+        #DATOS DEL ARREGLO DE RECURSOS Y SU CONTADOR
+        self.inventario_de_recursos, self.numero_de_recursos = self.cargar_datos(self.ARCHIVO_RECURSOS, self.MAX_RECURSOS)
+
+        #DATOS DEL ARREGLO DE USUARIOS Y SU CONTADOR
+        self.total_de_usuarios, self.numero_de_usuarios = self.cargar_datos(self.ARCHIVO_USUARIOS, self.MAX_USUARIOS)
+
+        #DATOS DEL ARREGLO DE PRÉSTAMOS ACTIVOS Y SU CONTADOR
+        self.prestamos_activos, self.numero_de_prestamos_activos = self.cargar_datos(self.ARCHIVO_PRESTAMOS_ACTIVOS, self.MAX_PRESTAMOS)
+
+        #DATOS DEL ARREGLO DE PRÉSTAMOS INACTIVOS Y SU CONTADOR
+        self.prestamos_inactivos, self.numero_de_prestamos_inactivos = self.cargar_datos(self.ARCHIVO_PRESTAMOS_INACTIVOS, self.MAX_PRESTAMOS_INACTIVOS)
+        
+        
+        
+        # Si la APP se ejecuta por primera vez (o ha habido un error), se crean dos usuarios por defecto de tipo administrador y bibliotecario
+        if (self.numero_de_usuarios == 0):
+            self.total_de_usuarios[0] = Usuario(nombre_usuario="Mateo", direccion_residencia="Medellin", telefono=300600200, email="m@gmail.com", codigo="m1811", id=101)
+            self.total_de_usuarios[0].tipo_de_usuario = Usuario.PERFIL_ADMIN
+            self.total_de_usuarios[1] = Usuario(nombre_usuario="Daniel", direccion_residencia="Medellin", telefono=300700300, email="d@gmail.com", codigo="d123", id=102)
+            self.total_de_usuarios[1].tipo_de_usuario = Usuario.PERFIL_BIBLIOTECARIO
+            self.numero_de_usuarios = 2
+            #LOS DOS PRIMEROS USUARIOS SE GUARDAN
+            if (self.guardar_datos(self.total_de_usuarios, self.ARCHIVO_USUARIOS)):
+                print("Se ha guardado con éxito un primer bibliotecario y administrador.")
+            else:
+                print("Ha habido un error al guardar al primer bibliotecario y administrador.")
+        
+        #Al inciar, no hay usuario autenticado
+        self.usuario_autenticado = None
+
+    def guardar_datos (self, arreglo_de_datos, archivo):
+        """ 
+        Este método almacena los datos de un arreglo en un archivo
+
+        PARÁMETROS:
+        arreglo_de_datos = arreglo Numpy con los datos a alamcenar.
+        archivo = URL relativa del archivo en el que se almacenarán los datos.
+
+        RETORNO:
+        True si almacena los datos correctamente en el archivo.
+        False si no logra almacenar los datos en el archivo.
+        """
+        try:
+            np.save(archivo, arreglo_de_datos)
+            return True
+        except (FileNotFoundError, EOFError):
+            print(f"Error: No se pudieron almacenar los datos en el archivo {archivo}.")
+            return False
+
+
+
+    def cargar_datos (self, archivo, num_max_datos):
+        """ 
+        Este método carga los datos de un archivo, en un arreglo específico.
+
+        PARAMETROS:
+            archivo = URL relativa del archivo a abrir.
+            num_max_datos = indica el tamaño máximo de datos que almacena el arreglo.
+
+        RETORNO:
+            arreglo_de_datos = arreglo con los datos cargados.
+            num_datos = cantidad de datos cargados en el arreglo.
+        
+        """
+        try:
+            arreglo_de_datos = np.load(archivo, allow_pickle=True)
+            i = 0
+            while (arreglo_de_datos[i] != None):
+                i += 1
+            return arreglo_de_datos, i
+
+        except (FileNotFoundError, EOFError):
+            print(f"Error: No pudo cargarse el archivo {archivo}. Se generará un arreglo vacío.")
+            arreglo_de_datos = np.full((num_max_datos), fill_value= None, dtype= object)
+            return arreglo_de_datos, 0
 
 
     def registrar_recurso (self):
@@ -95,56 +180,55 @@ class Biblioteca:
         Ninguno
 
         RETORNO:
-        Vacío
+        True si el registro se hace exitosamente.
+        False si no se hace el registro.
 
         Autor: Daniel Sánchez 29/05/2025
         """
-        # Se verifica que el total de recursos en el arreglo no sobrepase su capacidad máxima
-        if (self.numero_de_recursos < self.MAX_RECURSOS):
-            """Se declara una variable entera llamada decision y se pide al usuario que ingrese qué tipo
-            de recurso desea ingresar"""
-            decision = int
-            decision = leer_entero(1, 4, "Seleccione el tipo de recurso que desea registrar:\n1.Libro.\n2.Audio.\n3.Vídeo.\n4.Revista.")
-            
-            """Se crea una variable llamada no_hay_coincidencia y se inicializa en True, esto
-            permite que en caso de que un recurso ya registrado tenga una signatura topográfica igual
-            a la de un recurso en proceso de registro, no se permita registrar ese nuevo recurso"""
-            no_hay_coincidencia = bool
-            no_hay_coincidencia = True
-            
-            #Se verifica el valor almacenado en decision, de acuerdo a este, se crea el tipo de recurso y se piden sus datos
-            if (decision == 1):
-                objeto = Libro()
-                objeto.pedir_datos()
-            elif (decision == 2):
-                objeto = Audio()
-                objeto.pedir_datos()
-            elif (decision == 3):
-                objeto = Video()
-                objeto.pedir_datos()
-            elif (decision == 4):
-                objeto = Revista()
-                objeto.pedir_datos()
+        
+        """Se declara una variable entera llamada decision y se pide al usuario que ingrese qué tipo
+        de recurso desea ingresar"""
+        decision = int
+        decision = leer_entero(1, 4, "Seleccione el tipo de recurso que desea registrar:\n1.Libro.\n2.Audio.\n3.Vídeo.\n4.Revista.")
+        
+        """Se crea una variable llamada no_hay_coincidencia y se inicializa en True, esto
+        permite que en caso de que un recurso ya registrado tenga una signatura topográfica igual
+        a la de un recurso en proceso de registro, no se permita registrar ese nuevo recurso"""
+        no_hay_coincidencia = bool
+        no_hay_coincidencia = True
+        
+        #Se verifica el valor almacenado en decision, de acuerdo a este, se crea el tipo de recurso y se piden sus datos
+        if (decision == 1):
+            objeto = Libro()
+            objeto.pedir_datos()
+        elif (decision == 2):
+            objeto = Audio()
+            objeto.pedir_datos()
+        elif (decision == 3):
+            objeto = Video()
+            objeto.pedir_datos()
+        elif (decision == 4):
+            objeto = Revista()
+            objeto.pedir_datos()
 
-            """Una vez creado el recurso, el ciclo recorre todo el arreglo,
-            y en aquellas casillas con valores diferentes a None, compara si la signatura
-            topográfica del objeto almacenado coincide con la del nuevo objeto""" 
-            for i in range(len(self.inventario_de_recursos)):
-                if (self.inventario_de_recursos[i] != None):
-                    if (self.inventario_de_recursos[i].signatura_topografica == objeto.signatura_topografica):
-                        print("La signatura ingresada coincide con la de un recurso ya registrado. El recurso no será almacenado.")
-                        no_hay_coincidencia = False # Si hay una coincicencia, se hace falsa la variable
-            
-            #En caso de que el ciclo termine sin encontrar coincidencias, la variable no_hay_coincidencia es True
-            #Luego, se agrega el nuevo objeto al arreglo y se aumenta el contador de recursos en 1
-            if (no_hay_coincidencia):
-                self.inventario_de_recursos[self.numero_de_recursos] = objeto
-                print("Recurso registrado exitosamente.")
-                self.numero_de_recursos += 1
-        else:
-            print("No hay espacio para almacenar un nuevo recurso en este momento.")
+        """Una vez creado el recurso, el ciclo recorre todo el arreglo,
+        y en aquellas casillas con valores diferentes a None, compara si la signatura
+        topográfica del objeto almacenado coincide con la del nuevo objeto""" 
+        for i in range(len(self.inventario_de_recursos)):
+            if (self.inventario_de_recursos[i] != None):
+                if (self.inventario_de_recursos[i].signatura_topografica == objeto.signatura_topografica):
+                    print("La signatura ingresada coincide con la de un recurso ya registrado. El recurso no será almacenado.")
+                    no_hay_coincidencia = False # Si hay una coincicencia, se hace falsa la variable
+        
+        #En caso de que el ciclo termine sin encontrar coincidencias, la variable no_hay_coincidencia es True
+        #Luego, se agrega el nuevo objeto al arreglo y se aumenta el contador de recursos en 1
+        if (no_hay_coincidencia):
+            self.inventario_de_recursos[self.numero_de_recursos] = objeto
+            print("Recurso registrado exitosamente.")
+            self.numero_de_recursos += 1
+            return True
 
-        input("Presione Enter para continuar...")
+        return False
     
     
     def registrar_usuario (self):
@@ -156,46 +240,46 @@ class Biblioteca:
         Ninguno
 
         RETORNO:
-        Vacío
+        True si el registro pudo realizarse
+        False si el registro no pudo realizarse
 
         Autor: Mateo Daniel Galeano Quiñones 29/05/2025
         """ 
-        #Se verifica que el total de usuarios en el arreglo no sobrepase la capacidad máxima
-        if (self.numero_de_usuarios < self.MAX_USUARIOS):
-            #Se crea un objeto auxiliar de tipo usuario
-            objeto = Usuario()
-            #Se piden los datos básicos del usuario
-            objeto.pedir_datos()
-            """Se declara una variable bandera que permita identificar si hay coincidencias entre el código
-            del usuario con el código de otro usuario existente"""
-            no_hay_coincidencia = bool
-            no_hay_coincidencia = True
-            #Se crea una variable controladora del ciclo
-            i = int
-            #Un ciclo recorre el arreglo total_de_usuarios para verificar que no haya otro con su mismo código o identificación
-            for i in range (len(self.total_de_usuarios)):
-                if (self.total_de_usuarios[i] != None):
-                    if (self.total_de_usuarios[i].codigo == objeto.codigo and self.total_de_usuarios[i].id == objeto.id):
-                        print("La identificación y código de usuario ingresados ya existen. No es posible realizar el registro.")
-                        no_hay_coincidencia = False
-                    elif (self.total_de_usuarios[i].codigo == objeto.codigo):
-                        print("El código de usuario ya existe. No es posible realizar el registro.")
-                        no_hay_coincidencia = False
-                    elif (self.total_de_usuarios[i].id == objeto.id):
-                        print("El número de identificación ingresado ya existe. No es posible realizar el registro.")
-                        no_hay_coincidencia = False
+        
+    
+        #Se crea un objeto auxiliar de tipo usuario
+        objeto = Usuario()
+        #Se piden los datos básicos del usuario
+        objeto.pedir_datos()
+        """Se declara una variable bandera que permita identificar si hay coincidencias entre el código
+        del usuario con el código de otro usuario existente"""
+        no_hay_coincidencia = bool
+        no_hay_coincidencia = True
+        #Se crea una variable controladora del ciclo
+        i = int
+        #Un ciclo recorre el arreglo total_de_usuarios para verificar que no haya otro con su mismo código o identificación
+        for i in range (len(self.total_de_usuarios)):
+            if (self.total_de_usuarios[i] != None):
+                if (self.total_de_usuarios[i].codigo == objeto.codigo and self.total_de_usuarios[i].id == objeto.id):
+                    print("La identificación y código de usuario ingresados ya existen. No es posible realizar el registro.")
+                    no_hay_coincidencia = False
+                elif (self.total_de_usuarios[i].codigo == objeto.codigo):
+                    print("El código de usuario ya existe. No es posible realizar el registro.")
+                    no_hay_coincidencia = False
+                elif (self.total_de_usuarios[i].id == objeto.id):
+                    print("El número de identificación ingresado ya existe. No es posible realizar el registro.")
+                    no_hay_coincidencia = False
 
-            #En caso de que el ciclo termine sin encontrar coincidencias, la variable no_hay_coincidencia es True
-            #Luego, se agrega el nuevo objeto al arreglo y se aumenta el contador de recursos en 1
-            if (no_hay_coincidencia):
-                self.total_de_usuarios[self.numero_de_usuarios] = objeto
-                print("Usuario registrado exitosamente.")
-                self.numero_de_usuarios += 1
-        else:
-            print("No hay espacio para almacenar un nuevo usuario en este momento.")
-
-        input("Presione Enter para continuar...")
-
+        #En caso de que el ciclo termine sin encontrar coincidencias, la variable no_hay_coincidencia es True
+        #Luego, se agrega el nuevo objeto al arreglo y se aumenta el contador de recursos en 1
+        if (no_hay_coincidencia):
+            self.total_de_usuarios[self.numero_de_usuarios] = objeto
+            print("Usuario registrado exitosamente.")
+            self.numero_de_usuarios += 1
+            return True
+        
+        return False
+    
 
     def modificar_info_recurso(self):
         """
@@ -208,11 +292,13 @@ class Biblioteca:
         RETORNO:
         Vacio
 
-        Autor: Mateo Daniel Galeano Quiñones 31/05/2025
+        Autor: Mateo Galeano 31/05/2025
         """ 
+        el_recurso_esta_prestado = bool
+        el_recurso_esta_prestado = False
         signatura_para_busqueda = str
         coincidencia = bool
-        recurso = str
+        recurso = Recurso
         coincidencia = False
         num_del_recurso = int
         contador_i = int
@@ -244,7 +330,11 @@ class Biblioteca:
 
         #Si no se encontro ningún recurso con igual signatura topográfica, mostrar un mensaje que indique que no hubo ninguna coincidencia
         if coincidencia == False:
-            print("No se encontró ninguna coincidencia. Se le llevará de vuelta al menú principal.")
+            print("No se encontró ninguna coincidencia. Se le llevará de vuelta al menú.")
+        else:
+            #Si la coincidencia no es False, entonces se procede a verificar si ese recurso encontrado está prestado
+           if (self.inventario_de_recursos[num_del_recurso].estado == "PRESTADO"):
+               el_recurso_esta_prestado = True
 
         #Si se encuentra una coincidencia entonces
         while coincidencia:
@@ -317,6 +407,7 @@ class Biblioteca:
                                 self.inventario_de_recursos[num_del_recurso].signatura_topografica = signatura_nueva
                                 break
                             
+
                     #Para modificar la colección del recurso
                     case 4:
                         #Esta variable nos ayuda a elegir una opción
@@ -330,18 +421,20 @@ class Biblioteca:
 
                     #Para modificar el estado del recurso
                     case 5:
-                        #Esta variable nos ayuda a elegir una opción
-                        seleccion = leer_entero(1, 5, "Asigne un nuevo estado\n1.PRESTADO.\n2.DISPONIBLE.\n3.REPARACIÓN.\n4.INACTIVO.\n5.PERDIDO.")
-                        if seleccion == 1:
-                            self.inventario_de_recursos[num_del_recurso].estado = "PRESTADO"
-                        elif seleccion == 2:
-                            self.inventario_de_recursos[num_del_recurso].estado = "DISPONIBLE"
-                        elif seleccion == 3:
-                            self.inventario_de_recursos[num_del_recurso].estado = "REPARACIÓN"
-                        elif seleccion == 4:
-                            self.inventario_de_recursos[num_del_recurso].estado = "INACTIVO"
-                        elif seleccion == 5:
-                            self.inventario_de_recursos[num_del_recurso].estado = "PERDIDO"
+                        if (not el_recurso_esta_prestado):
+                            #Esta variable nos ayuda a elegir una opción
+                            seleccion = leer_entero(1, 4, "Asigne un nuevo estado:\n1.DISPONIBLE.\n2.REPARACIÓN.\n3.INACTIVO.\n4.PERDIDO.")
+    
+                            if seleccion == 1:
+                                self.inventario_de_recursos[num_del_recurso].estado = "DISPONIBLE"
+                            elif seleccion == 2:
+                                self.inventario_de_recursos[num_del_recurso].estado = "REPARACIÓN"
+                            elif seleccion == 3:
+                                self.inventario_de_recursos[num_del_recurso].estado = "INACTIVO"
+                            elif seleccion == 4:
+                                self.inventario_de_recursos[num_del_recurso].estado = "PERDIDO"
+                        else:
+                            print("El recurso se encuentra actualmente prestado, registre la devolución para poder editar su estado.")
                     
                     #Para modificar el autor
                     case 6:
@@ -404,18 +497,21 @@ class Biblioteca:
 
                     #Para modificar el estado del recurso
                     case 5:
-                        #Esta variable nos ayuda a elegir una opción
-                        seleccion = leer_entero(1, 5, "Asigne un nuevo estado\n1.PRESTADO.\n2.DISPONIBLE.\n3.REPARACIÓN.\n4.INACTIVO.\n5.PERDIDO.")
-                        if seleccion == 1:
-                            self.inventario_de_recursos[num_del_recurso].estado = "PRESTADO"
-                        elif seleccion == 2:
-                            self.inventario_de_recursos[num_del_recurso].estado = "DISPONIBLE"
-                        elif seleccion == 3:
-                            self.inventario_de_recursos[num_del_recurso].estado = "REPARACIÓN"
-                        elif seleccion == 4:
-                            self.inventario_de_recursos[num_del_recurso].estado = "INACTIVO"
-                        elif seleccion == 5:
-                            self.inventario_de_recursos[num_del_recurso].estado = "PERDIDO"
+                        if (not el_recurso_esta_prestado):
+                            #Esta variable nos ayuda a elegir una opción
+                            seleccion = leer_entero(1, 4, "Asigne un nuevo estado:\n1.DISPONIBLE.\n2.REPARACIÓN.\n3.INACTIVO.\n4.PERDIDO.")
+                        
+                        
+                            if seleccion == 1:
+                                self.inventario_de_recursos[num_del_recurso].estado = "DISPONIBLE"
+                            elif seleccion == 2:
+                                self.inventario_de_recursos[num_del_recurso].estado = "REPARACIÓN"
+                            elif seleccion == 3:
+                                self.inventario_de_recursos[num_del_recurso].estado = "INACTIVO"
+                            elif seleccion == 4:
+                                self.inventario_de_recursos[num_del_recurso].estado = "PERDIDO"
+                        else:
+                            print("El recurso se encuentra actualmente prestado. Registre la devolución para poder editar su estado.")
                     
                     #Para modificar el nombre del cantante
                     case 6:
@@ -474,18 +570,20 @@ class Biblioteca:
 
                     #Para modificar el estado del recurso
                     case 5:
-                        #Esta variable nos ayuda a elegir una opción
-                        seleccion = leer_entero(1, 5, "Asigne un nuevo estado\n1.PRESTADO.\n2.DISPONIBLE.\n3.REPARACIÓN.\n4.INACTIVO.\n5.PERDIDO.")
-                        if seleccion == 1:
-                            self.inventario_de_recursos[num_del_recurso].estado = "PRESTADO"
-                        elif seleccion == 2:
-                            self.inventario_de_recursos[num_del_recurso].estado = "DISPONIBLE"
-                        elif seleccion == 3:
-                            self.inventario_de_recursos[num_del_recurso].estado = "REPARACIÓN"
-                        elif seleccion == 4:
-                            self.inventario_de_recursos[num_del_recurso].estado = "INACTIVO"
-                        elif seleccion == 5:
-                            self.inventario_de_recursos[num_del_recurso].estado = "PERDIDO"
+                        if (not el_recurso_esta_prestado):
+                            #Esta variable nos ayuda a elegir una opción
+                            seleccion = leer_entero(1, 4, "Asigne un nuevo estado:\n1.DISPONIBLE.\n2.REPARACIÓN.\n3.INACTIVO.\n4.PERDIDO.")
+                            
+                            if seleccion == 1:
+                                self.inventario_de_recursos[num_del_recurso].estado = "DISPONIBLE"
+                            elif seleccion == 2:
+                                self.inventario_de_recursos[num_del_recurso].estado = "REPARACIÓN"
+                            elif seleccion == 3:
+                                self.inventario_de_recursos[num_del_recurso].estado = "INACTIVO"
+                            elif seleccion == 4:
+                                self.inventario_de_recursos[num_del_recurso].estado = "PERDIDO"
+                        else:
+                            print("El recurso se encuentra actualmente prestado. Registre la devolución para poder editar su estado.")
                     
                     #Para modificar el nombre del productor
                     case 6:
@@ -557,18 +655,20 @@ class Biblioteca:
 
                     #Para modificar el estado del recurso
                     case 5:
-                        #Esta variable nos ayuda a elegir una opción
-                        seleccion = leer_entero(1, 5, "Asigne un nuevo estado\n1.PRESTADO.\n2.DISPONIBLE.\n3.REPARACIÓN.\n4.INACTIVO.\n5.PERDIDO.")
-                        if seleccion == 1:
-                            self.inventario_de_recursos[num_del_recurso].estado = "PRESTADO"
-                        elif seleccion == 2:
-                            self.inventario_de_recursos[num_del_recurso].estado = "DISPONIBLE"
-                        elif seleccion == 3:
-                            self.inventario_de_recursos[num_del_recurso].estado = "REPARACIÓN"
-                        elif seleccion == 4:
-                            self.inventario_de_recursos[num_del_recurso].estado = "INACTIVO"
-                        elif seleccion == 5:
-                            self.inventario_de_recursos[num_del_recurso].estado = "PERDIDO"
+                        if (not el_recurso_esta_prestado):
+                            #Esta variable permite almacenar la elección del usuario
+                            seleccion = leer_entero(1, 4, "Asigne un nuevo estado:\n1.DISPONIBLE.\n2.REPARACIÓN.\n3.INACTIVO.\n4.PERDIDO.")
+                      
+                            if seleccion == 1:
+                                self.inventario_de_recursos[num_del_recurso].estado = "DISPONIBLE"
+                            elif seleccion == 2:
+                                self.inventario_de_recursos[num_del_recurso].estado = "REPARACIÓN"
+                            elif seleccion == 3:
+                                self.inventario_de_recursos[num_del_recurso].estado = "INACTIVO"
+                            elif seleccion == 4:
+                                self.inventario_de_recursos[num_del_recurso].estado = "PERDIDO"
+                        else:
+                            print("El recurso se encuentra actualmente prestado. Registre la devolución para poder editar su estado.")
                     
                     #Para modificar el ISSN
                     case 6:
@@ -600,9 +700,7 @@ class Biblioteca:
             if continuar == 2:
                 coincidencia = False
         
-        input("Presione Enter para continuar...")
-    
-    
+  
     def buscar_recurso (self):
         """
         Este método permite consultar y mostrar la información de un recurso que es buscado por
@@ -671,8 +769,6 @@ class Biblioteca:
             
             if (not coincidencia):
                 print("No se encontró ningún recurso con esa signatura topográfica.")
-        
-        input("Presione Enter para continuar...")
 
     def autenticar_usuario (self):
         """
@@ -716,20 +812,29 @@ class Biblioteca:
     def mostrar_menu_usuario_estudiante_y_empleado (self):
         decision = int
         decision = 0
-        while (decision != 6):
-            decision = leer_entero(1, 6, "**************\nMENÚ\n**************\nSeleccione una opción:\n1.Consultar y buscar recursos.\n2.Modificar datos personales.\n3.Prestar un recurso.\n4.Devolver un recurso.\n5.Verificar historial de préstamos.\n6.Cerrar sesión y regresar al menú principal.")
+        while (decision != 5):
+            decision = leer_entero(1, 5, "**************\nMENÚ\n**************\nSeleccione una opción:\n1.Consultar y buscar recursos.\n2.Modificar datos personales.\n3.Devolver un recurso.\n4.Verificar historial de préstamos.\n5.Cerrar sesión y regresar al menú principal.")
             match decision:
                 case 1:
                     self.buscar_recurso()
+                    input("Presione Enter para continuar...")
                 case 2:
-                    self.modificar_info_usuario()
+                    if (self.modificar_usuario(self.usuario_autenticado, False)):
+                        print("La información fue modificada con éxito.")
+                        ##PUNTO DE GUARDADO
+                        if (self.guardar_datos(self.total_de_usuarios, self.ARCHIVO_USUARIOS)):
+                            print("Datos guardados exitosamente.")
+                        else:
+                            print("Error: los datos no pudieron guardarse.")
+                        
+                        input("Presione Enter para continuar...")
+                    else:
+                        input("La información no pudo modificarse.\nPresione Enter para continuar...")
                 case 3:
                     pass
                 case 4:
                     pass
                 case 5:
-                    pass
-                case 6:
                     print("Sesión cerrada.")
                     self.usuario_autenticado = None
 
@@ -737,14 +842,36 @@ class Biblioteca:
         decision = int
         decision = 0
         while (decision != 8):
-            decision = leer_entero(1, 8, "**************\nMENÚ-BIBLIOTECARIO\n**************\nSeleccione una opción:\n1.Agregar recursos.\n2.Modificar recurso.\n3.Buscar recurso.\n4.Registrar préstamo.\n5.Registrar devolución.\n6.Consultar el historial de préstamos de un recurso.\n7.Consultar el historial de préstamos de un usuario.\n8.Cerrar sesión y salir.")
+            decision = leer_entero(1, 8, "**************\nMENÚ-BIBLIOTECARIO\n**************\nSeleccione una opción:\n1.Registrar recurso.\n2.Modificar recurso.\n3.Buscar recurso.\n4.Registrar préstamo.\n5.Registrar devolución.\n6.Consultar el historial de préstamos de un recurso.\n7.Consultar el historial de préstamos de un usuario.\n8.Cerrar sesión y salir.")
             match decision:
                 case 1:
-                    self.registrar_recurso()
+                    if (self.numero_de_recursos < self.MAX_RECURSOS):
+                        print("********\nREGISTRO\n********")
+                        if(self.registrar_recurso()):
+                    
+                            ##PUNTO DE GUARDADO
+                            if (self.guardar_datos (self.inventario_de_recursos, self.ARCHIVO_RECURSOS)):
+                                print("Datos guardados exitosamente.")
+                            else:
+                                print("Error: los datos no pudieron guardarse.")
+
+                            input ("Presione Enter para continuar...")
+                        else:
+                            input("Presione Enter para continuar...")
+                    else:
+                        input("No hay espacio disponible para registrar más recursos.\nPresione Enter para continuar...")
                 case 2:
                     self.modificar_info_recurso()
+                    ##PUNTO DE GUARDADO
+                    if (self.guardar_datos(self.inventario_de_recursos,self.ARCHIVO_RECURSOS)):
+                        print("Datos guardados exitosamente.")
+                    else:
+                        print("Error: los datos no pudieron guardarse.")
+                    
+                    input("Presione Enter para continuar...")
                 case 3:
                     self.buscar_recurso()
+                    input("Presione Enter para continuar...")
                 case 4:
                     if (self.numero_de_prestamos_activos < self.MAX_PRESTAMOS):
                         id_para_busqueda = int
@@ -758,18 +885,27 @@ class Biblioteca:
                         if (pos_recurso == -1 and pos_usuario == -1):
                             print(f"El usuario con ID: {id_para_busqueda} no fue encontrado.")
                             print(f"El recurso con signatura topográfica: {signatura_para_busqueda} no fue encontrado.")
+                            input("Presione Enter para continuar...")
                         elif (pos_recurso == -1 and pos_usuario != -1 ):
                             print(f"El recurso con signatura topográfica: {signatura_para_busqueda} no fue encontrado.")
+                            input("Presione Enter para continuar...")
                         elif (pos_recurso != -1 and pos_usuario == -1):
                             print(f"El usuario con ID: {id_para_busqueda} no fue encontrado.")
+                            input("Presione Enter para continuar...")
                         elif (pos_recurso != -1 and pos_usuario != -1):
                             if (self.registrar_prestamo(self.total_de_usuarios[pos_usuario], self.inventario_de_recursos[pos_recurso]) != None):
-                                input("El préstamo fue registrado exitosamente. Presione Enter para continuar...")
-                            else:
+                                print("El préstamo fue registrado exitosamente.")
+                                ##PUNTO DE GUARDADO
+                                if (self.guardar_datos(self.prestamos_activos, self.ARCHIVO_PRESTAMOS_ACTIVOS)):
+                                    print("Datos guardados con éxito.")
+                                else:
+                                    print("Error: los datos no pudieron guardarse.")
+                                
                                 input("Presione Enter para continuar...")
-        
+                            else:
+                                input("El préstamo no pudo registrarse.\nPresione Enter para continuar...")
                     else:
-                        input("No hay espacio disponible para registrar nuevos préstamos. Presione Enter para continuar...")
+                        input("No hay espacio disponible para registrar nuevos préstamos.\nPresione Enter para continuar...")
                 case 5:
                     pass
                 case 6:
@@ -787,13 +923,36 @@ class Biblioteca:
             decision = leer_entero(1, 12, "**************\nMENÚ-ADMINISTRADOR\n**************\nSeleccione una opción:\n1.Registrar recurso.\n2.Modificar recurso.\n3.Buscar recurso.\n4.Registrar préstamo.\n5.Registrar devolución.\n6.Consultar el historial de préstamos de un recurso.\n7.Consultar el historial de préstamos de un usuario.\n8.Agregar usuario.\n9.Modificar usuario.\n10.Eliminar usuario.\n11.Generar reportes del sistema.\n12.Cerrar sesión y salir.")
             match decision:
                 case 1:
-                    self.registrar_recurso()
+                    if (self.numero_de_recursos < self.MAX_RECURSOS):
+                        print("********\nREGISTRO\n********")
+                        if(self.registrar_recurso()):
+                    
+                            ##PUNTO DE GUARDADO
+                            if (self.guardar_datos (self.inventario_de_recursos, self.ARCHIVO_RECURSOS)):
+                                print("Datos guardados exitosamente.")
+                            else:
+                                print("Error: los datos no pudieron guardarse.")
+
+                            input ("Presione Enter para continuar...")
+                        else:
+                            input("Presione Enter para continuar...")
+                    else:
+                        input("No hay espacio disponible para registrar más recursos.\nPresione Enter para continuar...")
                 case 2:
                     self.modificar_info_recurso()
+                    ##PUNTO DE GUARDADO
+                    if (self.guardar_datos(self.inventario_de_recursos,self.ARCHIVO_RECURSOS)):
+                        print("Datos guardados exitosamente.")
+                    else:
+                        print("Error: los datos no pudieron guardarse.")
+                    
+                    input("Presione Enter para continuar...")
                 case 3:
                     self.buscar_recurso()
+                    input("Presione Enter para continuar...")
                 case 4:
                     if (self.numero_de_prestamos_activos < self.MAX_PRESTAMOS):
+                        print("********\nREGISTRO\n********")
                         id_para_busqueda = int
                         signatura_para_busqueda = str
                         pos_usuario = int
@@ -805,18 +964,28 @@ class Biblioteca:
                         if (pos_recurso == -1 and pos_usuario == -1):
                             print(f"El usuario con ID: {id_para_busqueda} no fue encontrado.")
                             print(f"El recurso con signatura topográfica: {signatura_para_busqueda} no fue encontrado.")
+                            input("Presione Enter para continuar...")
                         elif (pos_recurso == -1 and pos_usuario != -1 ):
                             print(f"El recurso con signatura topográfica: {signatura_para_busqueda} no fue encontrado.")
+                            input("Presione Enter para continuar...")
                         elif (pos_recurso != -1 and pos_usuario == -1):
                             print(f"El usuario con ID: {id_para_busqueda} no fue encontrado.")
+                            input("Presione Enter para continuar...")
                         elif (pos_recurso != -1 and pos_usuario != -1):
                             if (self.registrar_prestamo(self.total_de_usuarios[pos_usuario], self.inventario_de_recursos[pos_recurso]) != None):
-                                input("El préstamo fue registrado exitosamente. Presione Enter para continuar...")
-                            else:
+                                print("El préstamo fue registrado exitosamente.")
+                                ##PUNTO DE GUARDADO
+                                if (self.guardar_datos(self.prestamos_activos, self.ARCHIVO_PRESTAMOS_ACTIVOS)):
+                                    print("Datos guardados con éxito.")
+                                else:
+                                    print("Error: los datos no pudieron guardarse.")
+                                
                                 input("Presione Enter para continuar...")
+                            else:
+                                input("El préstamo no pudo registrarse.\nPresione Enter para continuar...")
         
                     else:
-                        input("No hay espacio disponible para registrar nuevos préstamos. Presione Enter para continuar...")
+                        input("No hay espacio disponible para registrar nuevos préstamos.\nPresione Enter para continuar...")
                 case 5:
                     pass
                 case 6:
@@ -824,9 +993,51 @@ class Biblioteca:
                 case 7:
                     pass
                 case 8:
-                    self.registrar_usuario()
+                    if (self.numero_de_usuarios < self.MAX_USUARIOS):
+                        print("********\nREGISTRO\n********")
+                        tipo_de_usuario = leer_entero(1, 4, "Seleccione el perfil del nuevo usuario:\n1.ADMINISTRADOR.\n2.BIBLIOTECARIO.\n3.ESTUDIANTE.\n4.EMPLEADO.")
+                        
+                        if (self.registrar_usuario()):
+                            if (tipo_de_usuario == 1):
+                                self.total_de_usuarios[self.numero_de_usuarios-1].tipo_de_usuario = Usuario.PERFIL_ADMIN
+                            elif (tipo_de_usuario == 2):
+                                self.total_de_usuarios[self.numero_de_usuarios-1].tipo_de_usuario = Usuario.PERFIL_BIBLIOTECARIO
+                            elif (tipo_de_usuario == 3):
+                                self.total_de_usuarios[self.numero_de_usuarios-1].tipo_de_usuario = Usuario.PERFIL_ESTUDIANTE
+                            elif (tipo_de_usuario == 4):
+                                self.total_de_usuarios[self.numero_de_usuarios-1].tipo_de_usuario = Usuario.PERFIL_EMPLEADO
+                            
+                            ###PUNTO DE GUARDADO
+                            if (self.guardar_datos(self.total_de_usuarios, self.ARCHIVO_USUARIOS)):
+                                print("Datos guardados exitosamente.")
+                            else:
+                                print("Error: los datos no pudieron guardarse.")
+
+                            input("Presione Enter para continuar...")
+                        else:
+                            input("Presione Enter para continuar...")
+                    else:
+                        input("No hay espacio disponible para registrar nuevos usuarios.\nPresione Enter para continuar...")
+                    
                 case 9:
-                    self.modificar_info_usuario()
+                    pos_usuario = int
+                    id_para_busqueda = leer_entero_no_acotado("Ingrese la ID del usuario que desea modificar: ")
+                    pos_usuario = self.buscar_usuario_por_id(identificacion=id_para_busqueda)
+                    if (pos_usuario != -1):
+                        if (self.modificar_usuario(self.total_de_usuarios[pos_usuario])):
+                            print("Información modificada con éxito.")
+
+                            ###PUNTO DE GUARDADO
+                            if (self.guardar_datos(self.total_de_usuarios, self.ARCHIVO_USUARIOS)):
+                                print("Datos guardados con éxito.")
+                            else:
+                                print("Error: los datos no pudieron guardarse.")
+                            
+                            input("Presione Enter para continuar...")
+                        else:
+                            input("La información no pudo modificarse.\nPresione Enter para continuar...")
+                    else:
+                        input("El usuario no fue encontrado.\nPresione Enter para continuar...")
                 case 10:
                     pass
                 case 11:
@@ -835,241 +1046,192 @@ class Biblioteca:
                     print("Sesión cerrada.")
                     self.usuario_autenticado = None
 
-    def modificar_info_usuario(self):
+
+    def modificar_usuario (self, user:Usuario, modificacion_de_administrador = True):
         """
-                Este método permite modificar la información de un usuario existente y da solución al requerimiento 9 del análisis del problema.
+        Este método permite modificar la información de un usuario existente.
+        La información que permite modificarse depende del usuario en cuestión,
+        un administrador modificando la información de un usuario puede eliminar
+        las multas de dicho usuario (si las tiene) y cambiar el perfil del mismo,
+        siempre y cuando NO haya multas o préstamos activos para ese usuario. 
+        Este método da solución al requerimiento 9 del análisis del problema.
 
-                PARÁMETEROS:
-                NINGUNO
+        PARÁMETEROS:
+        usuario = Usuario (Que es el usuario a modificar)
+        modificacion_de_administrador (Que permite identificar si es un administrador el que está modificando la info. de un usuario.)
 
-                RETORNO:
-                Vacío
+        RETORNO:
+        Booleano
 
-                Autor: Mateo Daniel Galeano Quiñones 27/06/2025
-            """
-        print("**************\nMODIFICAR-INFORMACIÓN-USUARIO\n**************")
-        #Se crea una variable posicion para almacenar la posicion del usuario encontrado
-        posicion = int
-        posicion = None
-        kiki = bool
-        
-        #Si el tipo de usuario autenticado es administrador, se pide al administrador que ingrese el id del usuario al cual quiere modificar sus datos
-        if (self.usuario_autenticado.tipo_de_usuario) == Usuario.PERFIL_ADMIN:
-            i = int
-            id_para_busqueda = int
-            id_para_busqueda = leer_entero_no_acotado("Ingrese el id del usuario: ")
+        Autor: Mateo Daniel Galeano Quiñones 27/06/2025
+        """
+        print("*"*32)
+        print("MODIFICAR INFORMACIÓN DE USUARIO")
+        print("*"*32)
+        #Se declaran las variables locales al método
+        usuario_a_modificar = user
+        i = int
+        modificacion_exitosa = False
 
-            #Se busca un un usuario con un id igual al id ingresado
-            posicion = self.buscar_usuario_por_id(identificacion=id_para_busqueda)
-                    
-            #Si no se encontro ningún usuario con el id ingresado, la posición se mantendrá en None y se muestra el siguiente mensaje
-            if posicion == -1:
-                print("No existe ningún usuario con el id ingresado.")
-                input("Presione Enter para continuar...")
-                return False
-            
-            #Si se encontro un usuario con el id ingresado, se muestra la información del usuario y se despliega el siguiente menú
-            while (posicion != -1):
-                #Muestra la informacion del usuario
-                print(
-                    f"INFORMACIÓN DEL USUARIO\n"
-                    f"Nombre: {self.total_de_usuarios[posicion].nombre_usuario}\n"
-                    f"Dirección: {self.total_de_usuarios[posicion].direccion_residencia}\n"
-                    f"Teléfono: {self.total_de_usuarios[posicion].telefono}\n"
-                    f"Email: {self.total_de_usuarios[posicion].email}\n"
-                    f"Código: {self.total_de_usuarios[posicion].codigo}\n"
-                    f"Tipo de usuario: {self.total_de_usuarios[posicion].tipo_de_usuario}\n"
-                    f"Id: {self.total_de_usuarios[posicion].id}"
-                )
-                desicion = int
-                desicion = 0
+        #El siguiente bloque de instrucciones permite modificar la información del usuario si lo hace un administrador
+        if (modificacion_de_administrador):
+
+            while (True):
+                usuario_a_modificar.mostrar_informacion()
+
+                # Se declaran las variables para que el usuario elija qué va a modificar
+                decision = int
+                decision = 0
                 opcion = int
                 opcion = 0
 
-                print("1.Nombre")
-                print("2.Dirección de residencia")
-                print("3.Número telefónico")
-                print("4.Correo electrónico")
-                print("5.Código")
-                print("6.Número de identificación")
-                print("7.Tipo de usuario")
-                print("8.Eliminar multa")
-                desicion = leer_entero(1, 8, "Seleccion una opción: ")
-                match(desicion):
+                print("Seleccione el atributo a modificar del usuario, indicando el número correspondiente.")
+                print("1.Nombre.")
+                print("2.Dirección de residencia.")
+                print("3.Número telefónico.")
+                print("4.Correo electrónico.")
+                print("5.Código.")
+                print("6.Número de identificación.")
+                print("7.Eliminar multa.")
+                decision = leer_entero(1, 7, "Ingrese su selección aquí: ")
+
+                match (decision):
                     case 1:
-                        self.total_de_usuarios[posicion].nombre_usuario = verificar_si_esta_vacio("Ingrese nuevo nombre: ")
+                        usuario_a_modificar.nombre_usuario = verificar_si_esta_vacio("Escriba el nuevo nombre del usuario: ")
                     case 2:
-                        self.total_de_usuarios[posicion].direccion_residencia = verificar_si_esta_vacio("Ingrese la nueva dirección de su residencia: ")
+                        usuario_a_modificar.direccion_residencia = verificar_si_esta_vacio("Escriba la nueva dirección de residencia: ")
                     case 3:
-                        self.total_de_usuarios[posicion].telefono = leer_entero_no_acotado("Ingrese nuevo número telefónico: ")
+                        usuario_a_modificar.telefono = leer_entero_no_acotado("Esciba el nuevo número telefónico: ")
                     case 4:
-                        self.total_de_usuarios[posicion].email = verificar_email("Ingrese una nueva dirección de correo electrónico: ")
+                        usuario_a_modificar.email = verificar_email("Escriba el nuevo email: ")
                     case 5:
-                        codigo = str
-                        codigo = ""
-                        #Variable para verificar si se encontro un código igual al de otro usuario
-                        kiki = True
-                        #Verifica que no se ingrese un id igual al de otro usuario
-                        while (kiki):
-                            codigo = verificar_cadena_alfanumerica("Ingrese nuevo código del usuario: ")
-                            kiki = False
-                            for i in range(self.numero_de_usuarios):
-                                if (codigo == self.total_de_usuarios[i].codigo):
-                                    print("Error. Este código pertenece a otro usuario")
-                                    kiki = True
-                        #Si el código no es igual al de otro usuario, se le agrega el código al usuario al cual estan modificando sus datos
-                        self.total_de_usuarios[posicion].codigo = codigo
-                    
+                        nuevo_codigo = str
+                        existe_un_codigo_igual = True
+                        while (existe_un_codigo_igual):
+                            existe_un_codigo_igual = False
+                            nuevo_codigo = verificar_cadena_alfanumerica("Escriba el nuevo código: ")
+                            for i in range (self.numero_de_usuarios):
+                                if (nuevo_codigo == self.total_de_usuarios[i].codigo):
+                                    print("El código ingresado ya está en uso. Ingrese otro código.")
+                                    existe_un_codigo_igual = True
+                        
+                        #Si el código ingresado no está repetido, entonces se asigna al atributo codigo
+                        usuario_a_modificar.codigo = nuevo_codigo
                     case 6:
-                        id = int
-                        id = 0
-                        #Variable para verificar si se encontro un id igual al de otro usuario
-                        kiki = True
-                        #Verifica que no se ingrese un id igual al de otro usuario
-                        while (kiki):
-                            id = leer_entero_no_acotado("Ingrese nuevo número de identificación: ")
-                            kiki = False
-                            for i in range(self.numero_de_usuarios):
-                                if (id == self.total_de_usuarios[i].id):
-                                    print("Error. Este id pertenece a otro usuario")
-                                    kiki = True
-                        #Si el id no es igual al de otro usuario, se le agrega el id al usuario al cual estan modificando sus datos 
-                        self.total_de_usuarios[posicion].id = id
+                        nuevo_id = int
+                        existe_un_id_igual = True
+                        while (existe_un_id_igual):
+                            existe_un_id_igual = False
+                            nuevo_id = leer_entero_no_acotado("Escriba el nuevo ID del usuario: ")
+                            for i in range (self.numero_de_usuarios):
+                                if (nuevo_id == self.total_de_usuarios[i].id):
+                                    print("El ID ingresado ya está en uso. Ingrese otro ID.")
+                                    existe_un_id_igual = True
+                        
+                        #Si el ID ingresado no está repetido, entonces se asigna al atributo id
+                        usuario_a_modificar.id = nuevo_id
+
                     case 7:
-                        tipo = leer_entero(1, 4, "Seleccione el nuevo tipo de usuario\n1.Estudiante\n2.Empleado\n3.Bibliotecario\n4.Administrador\n")
-                        match(tipo):
-                            case 1:
-                                self.total_de_usuarios[posicion].tipo_de_usuario = Usuario.PERFIL_ESTUDIANTE
-                            case 2:
-                                self.total_de_usuarios[posicion].tipo_de_usuario = Usuario.PERFIL_EMPLEADO
-                            case 3:
-                                self.total_de_usuarios[posicion].tipo_de_usuario = Usuario.PERFIL_BIBLIOTECARIO
-                            case 4:
-                                self.total_de_usuarios[posicion].tipo_de_usuario = Usuario.PERFIL_ADMIN
-                    case 8:
-                        kiki = True
-                        total_multas = int
-                        total_multas = 0
-                        print("**MULTAS**")
-                        #Se verifica que el usuario sea estudiante o empleado
-                        if (self.total_de_usuarios[posicion].tipo_de_usuario == Usuario.PERFIL_ESTUDIANTE or self.total_de_usuarios[posicion].tipo_de_usuario == Usuario.PERFIL_EMPLEADO):
+                    
+                        i = int
+                        total_de_multas = int
+                        total_de_multas = 0
+                        print("***MULTAS***")
+
+                        #Se verifica que el usuario tenga multas
+                        if (usuario_a_modificar.numero_de_multas > 0):
+
+                            #Se recorre el arreglo de multas del usuario y se muestran las multas que tiene
+
+                            for i in range (usuario_a_modificar.numero_de_multas):
+                                print(f"Multa #{i+1}:")
+                                usuario_a_modificar.multas_vigentes[i].mostrar_informacion()
+                                total_de_multas += 1
                             
-                            #Se verifica que el arreglo tenga multas
-                            if (self.total_de_usuarios[posicion].numero_de_multas > 0):
-                                #Se recorre el arreglo de multas del usuario con el fin de mostrar el valor de cada una
-                                for i in range(self.total_de_usuarios[posicion].numero_de_multas):
-                                    print(f"{i+1}. {self.total_de_usuarios[posicion].multas_vigentes[i]}")
-                                    total_multas += 1
-
-                                #Variable para seleccionar multa a eliminar
-                                opcion = leer_entero(1, total_multas, "Seleccion la multa a eliminar: ")
-                                match(opcion):
-                                    case 1:
-                                        self.total_de_usuarios[posicion].multas_vigentes[opcion - 1] = None
-                                    case 2:
-                                        self.total_de_usuarios[posicion].multas_vigentes[opcion - 1] = None
-                                    case 3:
-                                        self.total_de_usuarios[posicion].multas_vigentes[opcion - 1] = None
-                                    case 4:
-                                        self.total_de_usuarios[posicion].multas_vigentes[opcion - 1] = None
-                                    case 5:
-                                        self.total_de_usuarios[posicion].multas_vigentes[opcion - 1] = None
-
-                                #Ciclo para mover a la izquierda los objetos del arreglo partiendo del objeto eliminado para organizar el arreglo
-                                for i in range(opcion, self.total_de_usuarios[posicion].numero_de_multas):
-                                    if (opcion != self.total_de_usuarios[posicion].numero_de_multas):
-                                        self.total_de_usuarios[posicion].multas_vigentes[i - 1] = self.total_de_usuarios[posicion].multas_vigentes[i]
-                                
-
-                                self.total_de_usuarios[posicion].multas_vigentes[self.total_de_usuarios[posicion].numero_de_multas - 1] = None
-                                self.total_de_usuarios[posicion].numero_de_multas -= 1
-
-         
-                            #Si el arreglo no tiene multas se muestra un mensaje
-                            else:
-                                print("El usuario no tiene multas")
-                        #Si el tipo de usuario es diferente de estudiante o empleado se muestra un mensaje
+                            #Esta variable permite elegir la multa a eliminar
+                            opcion = leer_entero(1, total_de_multas, "Seleccione la multa que desea eliminar: ")
+                            
+                            #Se elimina la multa moviendo los elementos hacia la izquierda, desde la posición de la multa + 1
+                            opcion -= 1
+                            for i in range ((opcion + 1), usuario_a_modificar.numero_de_multas):
+                                usuario_a_modificar.multas_vigentes[i-1] = usuario_a_modificar.multas_vigentes[i]
+                            
+                            usuario_a_modificar.multas_vigentes[usuario_a_modificar.numero_de_multas-1] = None
+                            usuario_a_modificar.numero_de_multas -= 1
                         else:
-                            print("El usuario seleccionado no es de tipo estudiante o empleado")
+                            print("Este usuario no tiene multas.")
+                        
                 
-                #Para indicar que el recurso fue modificado
-                print("La información del usuario fue modificada con éxito.")
+                continuar = leer_entero(1, 2, "¿Desea modificar otro dato del usuario? 1.Si 2.No: ")
+                if (continuar == 2):
+                    modificacion_exitosa = True
+                    break
 
-                #Variable para saber si el administrador desea modificar otro atributo del usuario
-                continuar = leer_entero(1, 2, "¿Desea modificar otro atributo del usuario? 1.Si 2.No: ")
-                #Si escoge la opción 2, asignar -1 a la variable coincidencia para detener el ciclo
-                if continuar == 2:
-                    posicion = -1
-            
-            input("Presione Enter para continuar...")
-
-        #Si el usuario es de tipo estudiante o empleado, se despliega un menú para que modifique su información personal
+            return modificacion_exitosa
         else:
-            #Muestra la informacion del usuario
-            print(f"INFORMACIÓN DEL USUARIO\nNombre: {self.usuario_autenticado.nombre_usuario}\nDirección: {self.usuario_autenticado.direccion_residencia}\nTeléfono: {self.usuario_autenticado.telefono}\nEmail: {self.usuario_autenticado.email}\nCódigo: {self.usuario_autenticado.codigo}\nTipo de usuario: {self.usuario_autenticado.tipo_de_usuario}\nId: {self.usuario_autenticado.id}")
-            kiki = True
-            i = int
-            while (kiki):
-                desicion = int
-                desicion = 0
+            #Este bloque de instrucciones permite desplegar las opciones que un usuario puede modificar se su propia información
 
-                print("1.Nombre")
-                print("2.Dirección de residencia")
-                print("3.Número telefónico")
-                print("4.Correo electrónico")
-                print("5.Código")
-                print("6.Número de identificación")
-                desicion = leer_entero(1, 6, "Seleccion una opción: ")
-                match(desicion):
+            while (True):
+                usuario_a_modificar.mostrar_informacion()
+
+                # Se declaran las variables para que el usuario elija qué modificar
+                decision = int
+                decision = 0
+                opcion = int
+                opcion = 0
+
+                print("Seleccione el atributo a modificar del usuario, indicando el número correspondiente.")
+                print("1.Nombre.")
+                print("2.Dirección de residencia.")
+                print("3.Número telefónico.")
+                print("4.Correo electrónico.")
+                print("5.Código.")
+                print("6.Número de identificación.")
+
+                decision = leer_entero(1, 6, "Ingrese su selección aquí: ")
+
+                match (decision):
                     case 1:
-                        self.usuario_autenticado.nombre_usuario = verificar_si_esta_vacio("Ingrese nuevo nombre: ")
+                        usuario_a_modificar.nombre_usuario = verificar_si_esta_vacio("Escriba el nuevo nombre del usuario: ")
                     case 2:
-                        self.usuario_autenticado.direccion_residencia = verificar_si_esta_vacio("Ingrese la nueva dirección de su residencia: ")
+                        usuario_a_modificar.direccion_residencia = verificar_si_esta_vacio("Escriba la nueva dirección de residencia: ")
                     case 3:
-                        self.usuario_autenticado.telefono = leer_entero_no_acotado("Ingrese nuevo número telefónico: ")
+                        usuario_a_modificar.telefono = leer_entero_no_acotado("Esciba el nuevo número telefónico: ")
                     case 4:
-                        self.usuario_autenticado.email = verificar_email("Ingrese una nueva dirección de correo electrónico: ")
+                        usuario_a_modificar.email = verificar_email("Escriba el nuevo email: ")
                     case 5:
-                        codigo = str
-                        codigo = ""
-                        #Variable para verificar si se encontro un código igual al de otro usuario
-                        kiki = True
-                        #Verifica que no se ingrese un id igual al de otro usuario
-                        while (kiki):
-                            codigo = verificar_cadena_alfanumerica("Ingrese nuevo código del usuario: ")
-                            kiki = False
-                            for i in range(self.numero_de_usuarios):
-                                if (codigo == self.total_de_usuarios[i].codigo):
-                                    print("Error. Este código pertenece a otro usuario")
-                                    kiki = True
-                        #Si el código no es igual al de otro usuario, se le agrega el código al usuario al cual estan modificando sus datos
-                        self.usuario_autenticado.codigo = codigo
+                        nuevo_codigo = str
+                        existe_un_codigo_igual = True
+                        while (existe_un_codigo_igual):
+                            existe_un_codigo_igual = False
+                            nuevo_codigo = verificar_cadena_alfanumerica("Escriba el nuevo código: ")
+                            for i in range (self.numero_de_usuarios):
+                                if (nuevo_codigo == self.total_de_usuarios[i].codigo):
+                                    print("El código ingresado ya está en uso. Ingrese otro código.")
+                                    existe_un_codigo_igual = True
+                        
+                        #Si el código ingresado no está repetido, entonces se asigna al atributo codigo
+                        usuario_a_modificar.codigo = nuevo_codigo
                     case 6:
-                        id = int
-                        id = 0
-                        igual = bool
-                        igual = True
-                        #Verifica que no se ingrese un id igual al de otro usuario
-                        while (igual):
-                            id = leer_entero_no_acotado("Ingrese nuevo número de identificación: ")
-                            igual = False
-                            for i in range(self.numero_de_usuarios):
-                                if (id == self.total_de_usuarios[i].id):
-                                    print("Error. Este id pertenece a otro usuario")
-                                    igual = True
-                        #Si el id no es igual al de otro usuario, se le agrega el id al usuario al cual estan modificando sus datos 
-                        self.usuario_autenticado.id = id
-
-                #Para indicar que el recurso fue modificado
-                print("La información del usuario fue modificada con éxito.")
-
-                #Variable para saber si el usuario desea modificar otro atributo
-                continuar = leer_entero(1, 2, "¿Desea modificar otro atributo del usuario? 1.Si 2.No: ")
-                #Si escoje 2.No, asignar False a la variable coincidencia para detener el ciclo
-                if continuar == 2:
-                    kiki = False
+                        nuevo_id = int
+                        existe_un_id_igual = True
+                        while (existe_un_id_igual):
+                            existe_un_id_igual = False
+                            nuevo_id = leer_entero_no_acotado("Escriba el nuevo ID del usuario: ")
+                            for i in range (self.numero_de_usuarios):
+                                if (nuevo_id == self.total_de_usuarios[i].id):
+                                    print("El ID ingresado ya está en uso. Ingrese otro ID.")
+                                    existe_un_id_igual = True
+                        
+                        #Si el ID ingresado no está repetido, entonces se asigna al atributo id
+                        usuario_a_modificar.id = nuevo_id
+                
+                continuar = leer_entero(1, 2, "¿Desea modificar otro dato del usuario? 1.Si 2.No: ")
+                if (continuar == 2):
+                    modificacion_exitosa = True
+                    break
             
-            input("Presione Enter para continuar...")
+            return modificacion_exitosa
 
     def registrar_prestamo (self, usuario:Usuario, recurso):
             """
@@ -1230,13 +1392,28 @@ class Biblioteca:
             decision = leer_entero(1, 3, "*****SISTEMA DE BIBLIOTECA-MENÚ PRINCIPAL*****\nSeleccione una opción:\n1.Registrarse.\n2.Autenticarse.\n3.Finalizar el programa.\n")
             match decision:
                 case 1:
-                    print("********\nREGISTRO\n********")
-                    decision = leer_entero (1, 2, "Indique su perfil:\n1.ESTUDIANTE.\n2.EMPLEADO.")
-                    if (decision == 1):
-                        self.registrar_usuario()
+                    if (self.numero_de_usuarios < self.MAX_USUARIOS):
+                        print("********\nREGISTRO\n********")
+                        decision = leer_entero (1, 2, "Indique su perfil:\n1.ESTUDIANTE.\n2.EMPLEADO.")
+                        if (decision == 1):
+                            if (self.registrar_usuario()):
+                                ##PUNTO DE GUARDADO###
+                                if (self.guardar_datos(self.total_de_usuarios, self.ARCHIVO_USUARIOS)):
+                                    print("Guardado de datos exitoso.")
+                                else:
+                                    print("Error: no se pudo realizar el guardado de datos.")
+                        else:
+                            if (self.registrar_usuario()):
+                                self.total_de_usuarios[self.numero_de_usuarios-1].tipo_de_usuario = Usuario.PERFIL_EMPLEADO
+                                ##PUNTO DE GUARDADO###
+                                if (self.guardar_datos(self.total_de_usuarios, self.ARCHIVO_USUARIOS)):
+                                    print("Guardado de datos éxitoso.")
+                                else:
+                                    print("Error: no se pudo realizar el guardado de datos.")
+                        
+                        input("Presione Enter para continuar...")
                     else:
-                        self.registrar_usuario()
-                        self.total_de_usuarios[self.numero_de_usuarios-1].tipo_de_usuario = Usuario.PERFIL_EMPLEADO
+                        input("No hay espacio para registrar nuevos usuarios.\nPresione Enter para continuar...")
                 
                 case 2:
                     if (self.autenticar_usuario()):
@@ -1249,79 +1426,3 @@ class Biblioteca:
                 
                 case 3:
                     print("Programa Finalizado.")
-
-
-
-    def principal (self):
-        """
-        Este método despliega el menú de la aplicación e invoca a los métodos respectivos de cada opción,
-        que en este caso solo engloba a los primeros 4 requerimientos de la entrega No.1 del proyecto
-
-        PARÁMETEROS:
-        Ninguno
-
-        RETORNO:
-        Vacio
-
-        Autor: Diego Candamil 1/05/2025
-        """
-
-        """
-        Se declara una variable entera llamada "menu", que permite controlar el ciclo
-        """
-        menu = int
-        menu = 0
-        while (menu != 5):
-            menu = leer_entero(1, 5, "**************\nMENÚ PRINCIPAL\n**************\nSeleccione una opción:\n1.Registrar un recurso.\n2.Registrar un usuario.\n3.Modificar recurso.\n4.Consultar recurso.\n5.Salir.")
-            match menu:
-                case 1:
-                    self.registrar_recurso()
-                    input("Presione Enter para regresar al menú principal...")
-                    
-                case 2:
-                    self.registrar_usuario()
-                    input("Presione Enter para regresar al menú principal...")
-                case 3:
-                    self.modificar_info_recurso()
-                    input("Presione Enter para regresar al menú principal...")
-                case 4:
-                    self.buscar_recurso()
-                    input("Presione Enter para regresar al menú principal...")
-                case 5:
-                    print("Ejecución finalizada.")
-        """
-        Este método despliega el menú de la aplicación e invoca a los métodos respectivos de cada opción,
-        que en este caso solo engloba a los primeros 4 requerimientos de la entrega No.1 del proyecto
-
-        PARÁMETEROS:
-        Ninguno
-
-        RETORNO:
-        Vacio
-
-        Autor: Diego Candamil 1/05/2025
-        """
-
-        """
-        Se declara una variable entera llamada "menu", que permite controlar el ciclo
-        """
-        menu = int
-        menu = 0
-        while (menu != 5):
-            menu = leer_entero(1, 5, "**************\nMENÚ PRINCIPAL\n**************\nSeleccione una opción:\n1.Registrar un recurso.\n2.Registrar un usuario.\n3.Modificar recurso.\n4.Consultar recurso.\n5.Salir.")
-            match menu:
-                case 1:
-                    self.registrar_recurso()
-                    input("Presione Enter para regresar al menú principal...")
-                    
-                case 2:
-                    self.registrar_usuario()
-                    input("Presione Enter para regresar al menú principal...")
-                case 3:
-                    self.modificar_info_recurso()
-                    input("Presione Enter para regresar al menú principal...")
-                case 4:
-                    self.buscar_recurso()
-                    input("Presione Enter para regresar al menú principal...")
-                case 5:
-                    print("Ejecución finalizada.")

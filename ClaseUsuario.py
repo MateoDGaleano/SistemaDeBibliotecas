@@ -64,3 +64,15 @@ class Usuario:
         self.telefono = leer_entero_no_acotado("Ingrese su número telefónico: ")
         self.email = verificar_email("Ingrese su dirección de correo electrónico: ")
         self.codigo = verificar_cadena_alfanumerica("Crea tu código de usuario: ")
+
+    #ESTE MÉTODO SE ENCARGA DE MOSTRAR LA INFORMACIÓN BÁSICA DEL USUARIO
+    def mostrar_informacion (self):
+        print("## INFORMACIÓN DEL USUARIO ##")
+        print(f"Nombre: {self.nombre_usuario}")
+        print(f"Dirección: {self.direccion_residencia}")
+        print(f"Teléfono: {self.telefono}")
+        print(f"Email: {self.email}")
+        print(f"Código: {self.codigo}")
+        print(f"Tipo de usuario: {self.tipo_de_usuario}")
+        print(f"Identificación: {self.id}")
+        print(f"Multas activas: {self.numero_de_multas}")
