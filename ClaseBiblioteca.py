@@ -1039,21 +1039,93 @@ class Biblioteca:
                     else:
                         input("El usuario no fue encontrado.\nPresione Enter para continuar...")
                 case 10:
-                    pass
+                    pos_usuario = int
+                    id_para_busqueda = leer_entero_no_acotado("Ingrese la ID del usuario que desea eliminar: ")
+                    pos_usuario = self.buscar_usuario_por_id(identificacion=id_para_busqueda)
+                    if (pos_usuario != -1):
+                        if (self.eliminar_usuario(self.total_de_usuarios[pos_usuario], pos_usuario)):
+                            print("Información modificada con éxito.")
+
+                            ###PUNTO DE GUARDADO
+                            if (self.guardar_datos(self.total_de_usuarios, self.ARCHIVO_USUARIOS)):
+                                print("Datos guardados con éxito.")
+                            else:
+                                print("Error: los datos no pudieron guardarse.")
+                            
+                            input("Presione Enter para continuar...")
+                        else:
+                            input("Presione Enter para continuar...")
+                    else:
+                        input("El usuario no fue encontrado.\nPresione Enter para continuar...")
                 case 11:
                     pass
                 case 12:
                     print("Sesión cerrada.")
                     self.usuario_autenticado = None
 
+    def eliminar_usuario(self, user:Usuario, pos):
+        """
+        Este método permite eliminar un usuario existente, siempre y cuando 
+        NO haya multas o préstamos activos para ese usuario. 
+        Este método da solución al requerimiento 10 del análisis del problema.
+
+        PARÁMETEROS:
+        usuario = Usuario (Que es el usuario a eliminar)
+        pos -> pos_usuario (variable que almacena la posición del usuario)
+
+        RETORNO:
+        Booleano
+
+        Autor: Mateo Daniel Galeano Quiñones 30/06/2025
+        """
+
+        print("*"*32)
+        print("ELIMINAR USUARIO")
+        print("*"*32)
+
+        usuario_a_eliminar = user
+        i = int
+        eliminacion_exitosa = False
+        
+        usuario_a_eliminar.mostrar_informacion()
+
+        #Si no se encuentra al usuario, retornar la variable eliminacion_exitosa que almacena el valor de False
+        if (pos == -1):
+            return eliminacion_exitosa
+        
+        #Se verifica que la posición sea diferente de -1, en caso de que sea -1 retornar la variable eliminacion_exitosa que almacena el valor de False
+        if (pos != -1):
+            #Se verifica que el usuario no tenga multas activas, en caso de que tenga retornar la variable eliminacion_exitosa que almacena el valor de False
+            if (usuario_a_eliminar.numero_de_multas == 0):
+                #Se verifica que el usuario no tenga prestamos activos, en caso de que los tenga retornar la variable eliminacion_exitosa que almacena el valor de False
+                for i in range(self.numero_de_prestamos_activos):
+                    if (usuario_a_eliminar.nombre_usuario == self.prestamos_activos[i].titular_del_prestamo):
+                        print("No se puede eliminar al usuario debido a que tiene prestamos activos")
+                        return eliminacion_exitosa
+
+                #Si el usuario cumple con las condiciones para ser eliminado, se usa un ciclo para mover los usuarios almacenados en el array hacia la izquierda
+                for i in range(pos + 1, self.numero_de_usuarios):
+                    self.total_de_usuarios[i - 1] = self.total_de_usuarios[i]
+
+                #Se asigna el valor de None al usuario en la posicion numero_de_usuarios - 1 del arreglo total de usuarios
+                self.total_de_usuarios[self.numero_de_usuarios - 1] = None
+                self.numero_de_usuarios -= 1
+                eliminacion_exitosa = True
+                return True
+            else:
+                print("El usuario tiene multas activas")
+                return eliminacion_exitosa
+        else:
+            print("El usuario no fue encontrado")
+            return eliminacion_exitosa
 
     def modificar_usuario (self, user:Usuario, modificacion_de_administrador = True):
         """
         Este método permite modificar la información de un usuario existente.
         La información que permite modificarse depende del usuario en cuestión,
         un administrador modificando la información de un usuario puede eliminar
-        las multas de dicho usuario (si las tiene) y cambiar el perfil del mismo,
-        siempre y cuando NO haya multas o préstamos activos para ese usuario. 
+        las multas de dicho usuario (si las tiene), siempre y cuando NO haya 
+        multas o préstamos activos para ese usuario.
         Este método da solución al requerimiento 9 del análisis del problema.
 
         PARÁMETEROS:
