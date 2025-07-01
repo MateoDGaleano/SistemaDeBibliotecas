@@ -907,7 +907,39 @@ class Biblioteca:
                     else:
                         input("No hay espacio disponible para registrar nuevos préstamos.\nPresione Enter para continuar...")
                 case 5:
+                    id_para_busqueda = int
+                    pos_usuario = int
+                    print("********\nREGISTRO-DEVOLUCIÓN\n********")
+                    id_para_busqueda = leer_entero_no_acotado("Escriba la ID del usuario que desea realizar la devolución: ")
+                    pos_usuario = self.buscar_usuario_por_id(identificacion=id_para_busqueda)
+                    if (pos_usuario != -1):
+                        if (self.devolver_prestamo(self.total_de_usuarios[pos_usuario])):
+                            ##PUNTO DE GUARDADO
+                            if (self.guardar_datos(self.prestamos_activos, self.ARCHIVO_PRESTAMOS_ACTIVOS)):
+                                if (self.guardar_datos(self.prestamos_inactivos, self.ARCHIVO_PRESTAMOS_INACTIVOS)):
+                                    if (self.guardar_datos(self.total_de_usuarios, self.ARCHIVO_USUARIOS)):
+                                        if (self.guardar_datos(self.inventario_de_recursos, self.ARCHIVO_RECURSOS)):
+                                            print("Datos guardados con éxito.")
+                                        else:
+                                            print("Error: los datos no pudieron guardarse.")
+                                    else:
+                                        print("Error: los datos no pudieron guardarse.")
+                                else:
+                                    print("Error: los datos no pudieron guardarse.")
+                            else:
+                                print("Error: los datos no pudieron guardarse.")
+                            input("Presione Enter para continuar...")
+                        else:
+                            input("El usuario no tiene préstamos a su nombre\nPresione Enter para continuar...")
+                    else:
+                        input(f"El usuario con ID {id_para_busqueda} no fue encontrado.\nPresione Enter para continuar...")
+                case 6:
                     pass
+                case 7:
+                    pass
+                case 8:
+                    print("Sesión cerrada.")
+                    self.usuario_autenticado = None
                 case 6:
                     pass
                 case 7:
@@ -1448,7 +1480,6 @@ class Biblioteca:
         decision = int #Para almacenar qué préstamo desea devolver el usuario
         hay_multa = bool #Para identificar si existe una multa por la devolución
 
-
         #Se recorre el arreglo de préstamos activos, en búsqueda de los préstamos que pertenecen al usuario
         for i in range (len(self.prestamos_activos)):
             if (self.prestamos_activos[i] != None):
@@ -1483,6 +1514,14 @@ class Biblioteca:
             decision -= 1
 
             arr_aux[decision].recurso_prestado.estado = "DISPONIBLE" #El atributo estado pasa a DISPONIBLE
+
+            #Se recorre el arreglo de recursos, y se busca el recurso que es titular de ese préstamo
+            for i in range (len(self.inventario_de_recursos)):
+                if (self.inventario_de_recursos[i] != None):
+                    if (self.inventario_de_recursos[i].signatura_topografica == arr_aux[decision].recurso_prestado.signatura_topografica):
+                        self.inventario_de_recursos[i].estado = "DISPONIBLE"
+                        break
+
             arr_aux[decision].fecha_de_devolucion = date.today() #Se genera la fecha de devolución
 
             #Seguidamente, el préstamo debe ser transferido al arreglo de préstamos inactivos.
