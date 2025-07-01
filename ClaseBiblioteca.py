@@ -987,7 +987,32 @@ class Biblioteca:
                     else:
                         input("No hay espacio disponible para registrar nuevos préstamos.\nPresione Enter para continuar...")
                 case 5:
-                    pass
+                    id_para_busqueda = int
+                    pos_usuario = int
+                    print("********\nREGISTRO-DEVOLUCIÓN\n********")
+                    id_para_busqueda = leer_entero_no_acotado("Escriba la ID del usuario que desea realizar la devolución: ")
+                    pos_usuario = self.buscar_usuario_por_id(identificacion=id_para_busqueda)
+                    if (pos_usuario != -1):
+                        if (self.devolver_prestamo(self.total_de_usuarios[pos_usuario])):
+                            ##PUNTO DE GUARDADO
+                            if (self.guardar_datos(self.prestamos_activos, self.ARCHIVO_PRESTAMOS_ACTIVOS)):
+                                if (self.guardar_datos(self.prestamos_inactivos, self.ARCHIVO_PRESTAMOS_INACTIVOS)):
+                                    if (self.guardar_datos(self.total_de_usuarios, self.ARCHIVO_USUARIOS)):
+                                        if (self.guardar_datos(self.inventario_de_recursos, self.ARCHIVO_RECURSOS)):
+                                            print("Datos guardados con éxito.")
+                                        else:
+                                            print("Error: los datos no pudieron guardarse.")
+                                    else:
+                                        print("Error: los datos no pudieron guardarse.")
+                                else:
+                                    print("Error: los datos no pudieron guardarse.")
+                            else:
+                                print("Error: los datos no pudieron guardarse.")
+                            input("Presione Enter para continuar...")
+                        else:
+                            input("El usuario no tiene préstamos a su nombre\nPresione Enter para continuar...")
+                    else:
+                        input(f"El usuario con ID {id_para_busqueda} no fue encontrado.\nPresione Enter para continuar...")
                 case 6:
                     pass
                 case 7:
@@ -1099,7 +1124,7 @@ class Biblioteca:
             if (usuario_a_eliminar.numero_de_multas == 0):
                 #Se verifica que el usuario no tenga prestamos activos, en caso de que los tenga retornar la variable eliminacion_exitosa que almacena el valor de False
                 for i in range(self.numero_de_prestamos_activos):
-                    if (usuario_a_eliminar.nombre_usuario == self.prestamos_activos[i].titular_del_prestamo):
+                    if (usuario_a_eliminar.id == self.prestamos_activos[i].titular_del_prestamo.id):
                         print("No se puede eliminar al usuario debido a que tiene prestamos activos")
                         return eliminacion_exitosa
 
@@ -1399,7 +1424,136 @@ class Biblioteca:
                 print("El usuario ha alcanzado el límite de préstamos simultáneos.")
             
             return objeto
-        
+
+    def devolver_prestamo (self, user:Usuario):
+        """
+            Este método permite realizar la devolución de un préstamo.
+            Este método da solución al requerimiento 6 del análisis del problema.
+
+            PARÁMETEROS:
+            user: Usuario que realiza la devolución del préstamo
+
+            RETORNO:
+            Booleano, True si la devolución tuvo éxito y False si fracasó.
+
+            Autor: Daniel Sánchez Escobar 30/06/2025
+        """
+        #Variables
+        usuario = user #Se almacena al usuario que realiza la devolución
+        contador_de_prestamos = int #Cuenta los préstamos que están a nombre del usuario
+        contador_de_prestamos = 0
+        i = int
+        j = int
+        arr_aux = np.ndarray #Arreglo auxiliar donde se almacenarán los préstamos del usuario
+        decision = int #Para almacenar qué préstamo desea devolver el usuario
+        hay_multa = bool #Para identificar si existe una multa por la devolución
+
+
+        #Se recorre el arreglo de préstamos activos, en búsqueda de los préstamos que pertenecen al usuario
+        for i in range (len(self.prestamos_activos)):
+            if (self.prestamos_activos[i] != None):
+                if (self.prestamos_activos[i].titular_del_prestamo.id == usuario.id):
+                    contador_de_prestamos += 1
+
+        #Se verifica si el contador permanece en cero o es mayor a cero tras el recorrido
+        if (contador_de_prestamos > 0):
+            #Se inicializa el arreglo de objetos, con tamaño dado por el contador de préstamos
+            arr_aux = np.full((contador_de_prestamos), fill_value=None, dtype=object)
+
+            #Se recorre de nuevo el arreglo de préstamos activos, para asignar al arreglo auxiliar los préstamos del usuario
+            j = 0 #Para controlar el índice del arreglo auxiliar
+            for i in range (len(self.prestamos_activos)):
+                if (self.prestamos_activos[i] != None):
+                    if (self.prestamos_activos[i].titular_del_prestamo.id == usuario.id):
+                        arr_aux [j] = self.prestamos_activos[i]
+                        j += 1
+            
+            #Tras finalizar el llenado del arreglo auxiliar, se muestra su información a modo de menú:
+            for i in range (len(arr_aux)):
+                print(f"** PRÉSTAMO #{i+1} **")
+                print(f"Título del recurso: {arr_aux[i].recurso_prestado.titulo}")
+                print(f"Signatura Topográfica: {arr_aux[i].recurso_prestado.signatura_topografica}")
+                print(f"Fecha de generación del préstamo: {arr_aux[i].fecha_de_prestamo}")
+                print(f"Titular del préstamo: {arr_aux[i].titular_del_prestamo.nombre_usuario}")
+                print(f"ID del titular: {arr_aux[i].titular_del_prestamo.id}")
+            
+            #Se pide al usuario que elija cuál préstamo desea devolver
+            decision = leer_entero(1, contador_de_prestamos, "\nEscriba el número del préstamo que desea devolver aquí: ")
+            #Se resta 1 a la variable para usarla como índice en el arreglo auxiliar
+            decision -= 1
+
+            arr_aux[decision].recurso_prestado.estado = "DISPONIBLE" #El atributo estado pasa a DISPONIBLE
+            arr_aux[decision].fecha_de_devolucion = date.today() #Se genera la fecha de devolución
+
+            #Seguidamente, el préstamo debe ser transferido al arreglo de préstamos inactivos.
+
+            #Primero, se debe verificar que el arreglo no esté lleno
+
+            if (self.numero_de_prestamos_inactivos < self.MAX_PRESTAMOS_INACTIVOS):
+                #Si el arreglo no está lleno, simplemente se asigna el nuevo préstamo finalizado
+                self.prestamos_inactivos[self.numero_de_prestamos_inactivos] = arr_aux[decision]
+                self.numero_de_prestamos_inactivos += 1
+            else:
+                #Si el arreglo está lleno, se elimina el primer préstamo inactivo del arreglo, para hacer espacio
+                self.prestamos_inactivos[0] = None
+                for i in range(1, self.numero_de_prestamos_inactivos):
+                    self.prestamos_inactivos[i-1] = self.prestamos_inactivos[i]
+                
+                self.prestamos_inactivos[self.numero_de_prestamos_inactivos - 1] = None
+                self.numero_de_prestamos_inactivos -= 1
+
+                #Después de realizar la eliminación, se procede a registrar el nuevo préstamo inactivo
+
+                self.prestamos_inactivos[self.numero_de_prestamos_inactivos] = arr_aux[decision]
+                self.numero_de_prestamos_inactivos += 1
+            
+            #Una vez registrado el préstamo en el arreglo de préstamos inactivos, se verifica si hay multa
+            if (arr_aux[decision].verificar_dias_de_mora(arr_aux[decision].fecha_de_devolucion) != 0):
+                
+                #Si el número de días de mora es diferente a cero, se hace el cálculo de nuevo y se almacena
+                dias_de_mora = int
+                dias_de_mora = arr_aux[decision].verificar_dias_de_mora(arr_aux[decision].fecha_de_devolucion)
+                # Se crea un objeto multa, guardándolo en el arreglo de multas del usuario
+                usuario.multas_vigentes[usuario.numero_de_multas] = Multa(dias_de_mora*1000, arr_aux[decision].fecha_de_devolucion, arr_aux[decision].recurso_prestado)
+                usuario.numero_de_multas +=1
+                hay_multa = True
+            else:
+                #Si el número de días de mora es cero, entonces simplemente no hay multa
+                hay_multa = False
+
+            #Se elimina la instancia del préstamo del arreglo de préstamos activos
+
+            posicion_del_prestamo = int #Denota la posición del préstamo en el arreglo de préstamos activos
+
+            #Se recorre de nuevo el arreglo de préstamos activos
+            #Y se busca, por signatura del recurso, el préstamo que se está devolviendo
+            for i in range (len(self.prestamos_activos)):
+                if (self.prestamos_activos[i] != None):
+                    if (arr_aux[decision].recurso_prestado.signatura_topografica == self.prestamos_activos[i].recurso_prestado.signatura_topografica):
+                        posicion_del_prestamo = i
+                        break
+            
+            #Una vez obtenida la posición, se procede a realizar la eliminación
+            self.prestamos_activos[posicion_del_prestamo] = None
+            for i in range((posicion_del_prestamo + 1), self.numero_de_prestamos_activos):
+                self.prestamos_activos[i-1] = self.prestamos_activos[i]
+            
+            self.prestamos_activos[self.numero_de_prestamos_activos - 1] = None
+            self.numero_de_prestamos_activos -= 1
+
+            #Finalmente, se muestra el mensaje que indica la devolución exitosa y la multa, si hay
+
+            print("El recurso fue devuelto exitosamente.")
+            if (hay_multa):
+                print("Se ha generado una multa:")
+                usuario.multas_vigentes[usuario.numero_de_multas - 1].mostrar_informacion()
+            else:
+                print("No se ha generado multa.")
+            
+            return True
+        else:
+            return False
+
     def buscar_usuario_por_id (self, identificacion):
         """
             Este método permite buscar a un usuario por medio de su número de identificación (id), 
