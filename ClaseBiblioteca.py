@@ -124,6 +124,32 @@ class Biblioteca:
         #Al inciar, no hay usuario autenticado
         self.usuario_autenticado = None
 
+        #Se deben reconectar las direcciones de memoria para los atributos de recurso_prestado y titular_del_prestamo para cada préstamo
+
+        for i in range(self.numero_de_prestamos_activos):
+            for j in range(self.numero_de_usuarios):
+                if (self.prestamos_activos[i].titular_del_prestamo.id == self.total_de_usuarios[j].id):
+                    self.prestamos_activos[i].titular_del_prestamo = self.total_de_usuarios[j]
+
+        #Se hace la misma reconexión, para los recursos
+        for i in range(self.numero_de_prestamos_activos):
+            for j in range(self.numero_de_recursos):
+                if (self.prestamos_activos[i].recurso_prestado.signatura_topografica == self.inventario_de_recursos[j].signatura_topografica):
+                    self.prestamos_activos[i].recurso_prestado = self.inventario_de_recursos[j]
+
+        #Se hace la reconexión para las multas
+        for i in range (self.numero_de_usuarios):
+            for j in range(self.total_de_usuarios[i].numero_de_multas):
+                for k in range(self.numero_de_recursos):
+                    if (self.total_de_usuarios[i].multas_vigentes[j].recurso_con_multa.signatura_topografica == self.inventario_de_recursos[k].signatura_topografica):
+                        self.total_de_usuarios[i].multas_vigentes[j].recurso_con_multa = self.inventario_de_recursos[k]
+
+        #Se hace la reconexión para los prestamos inactivos
+        for i in range(self.numero_de_prestamos_inactivos):
+            for j in range(self.numero_de_usuarios):
+                if (self.prestamos_inactivos[i].titular_del_prestamo.id == self.total_de_usuarios[j].id):
+                    self.prestamos_inactivos[i].titular_del_prestamo = self.total_de_usuarios[j]
+
     def guardar_datos (self, arreglo_de_datos, archivo):
         """ 
         Este método almacena los datos de un arreglo en un archivo
@@ -822,18 +848,28 @@ class Biblioteca:
                     if (self.modificar_usuario(self.usuario_autenticado, False)):
                         print("La información fue modificada con éxito.")
                         ##PUNTO DE GUARDADO
-                        if (self.guardar_datos(self.total_de_usuarios, self.ARCHIVO_USUARIOS)):
-                            print("Datos guardados exitosamente.")
+                        if (self.guardar_datos(self.prestamos_activos, self.ARCHIVO_PRESTAMOS_ACTIVOS)):
+                            if (self.guardar_datos(self.prestamos_inactivos, self.ARCHIVO_PRESTAMOS_INACTIVOS)):
+                                if (self.guardar_datos(self.total_de_usuarios, self.ARCHIVO_USUARIOS)):
+                                    if (self.guardar_datos(self.inventario_de_recursos, self.ARCHIVO_RECURSOS)):
+                                        print("Datos guardados con éxito.")
+                                    else:
+                                        print("Error: los datos no pudieron guardarse.")
+                                else:
+                                    print("Error: los datos no pudieron guardarse.")
+                            else:
+                                print("Error: los datos no pudieron guardarse.")
                         else:
                             print("Error: los datos no pudieron guardarse.")
-                        
+                            
                         input("Presione Enter para continuar...")
                     else:
                         input("La información no pudo modificarse.\nPresione Enter para continuar...")
                 case 3:
                     pass
                 case 4:
-                    pass
+                    self.mostrar_historial_usuario(self.usuario_autenticado)
+                    input("Presione Enter para continuar...")
                 case 5:
                     print("Sesión cerrada.")
                     self.usuario_autenticado = None
@@ -863,8 +899,17 @@ class Biblioteca:
                 case 2:
                     self.modificar_info_recurso()
                     ##PUNTO DE GUARDADO
-                    if (self.guardar_datos(self.inventario_de_recursos,self.ARCHIVO_RECURSOS)):
-                        print("Datos guardados exitosamente.")
+                    if (self.guardar_datos(self.prestamos_activos, self.ARCHIVO_PRESTAMOS_ACTIVOS)):
+                        if (self.guardar_datos(self.prestamos_inactivos, self.ARCHIVO_PRESTAMOS_INACTIVOS)):
+                            if (self.guardar_datos(self.total_de_usuarios, self.ARCHIVO_USUARIOS)):
+                                if (self.guardar_datos(self.inventario_de_recursos, self.ARCHIVO_RECURSOS)):
+                                    print("Datos guardados con éxito.")
+                                else:
+                                    print("Error: los datos no pudieron guardarse.")
+                            else:
+                                print("Error: los datos no pudieron guardarse.")
+                        else:
+                            print("Error: los datos no pudieron guardarse.")
                     else:
                         print("Error: los datos no pudieron guardarse.")
                     
@@ -897,10 +942,19 @@ class Biblioteca:
                                 print("El préstamo fue registrado exitosamente.")
                                 ##PUNTO DE GUARDADO
                                 if (self.guardar_datos(self.prestamos_activos, self.ARCHIVO_PRESTAMOS_ACTIVOS)):
-                                    print("Datos guardados con éxito.")
+                                    if (self.guardar_datos(self.prestamos_inactivos, self.ARCHIVO_PRESTAMOS_INACTIVOS)):
+                                        if (self.guardar_datos(self.total_de_usuarios, self.ARCHIVO_USUARIOS)):
+                                            if (self.guardar_datos(self.inventario_de_recursos, self.ARCHIVO_RECURSOS)):
+                                                print("Datos guardados con éxito.")
+                                            else:
+                                                print("Error: los datos no pudieron guardarse.")
+                                        else:
+                                            print("Error: los datos no pudieron guardarse.")
+                                    else:
+                                        print("Error: los datos no pudieron guardarse.")
                                 else:
                                     print("Error: los datos no pudieron guardarse.")
-                                
+
                                 input("Presione Enter para continuar...")
                             else:
                                 input("El préstamo no pudo registrarse.\nPresione Enter para continuar...")
@@ -934,16 +988,24 @@ class Biblioteca:
                     else:
                         input(f"El usuario con ID {id_para_busqueda} no fue encontrado.\nPresione Enter para continuar...")
                 case 6:
-                    pass
+                    pos_recurso = int
+                    signatura_para_busqueda = verificar_cadena_alfanumerica("Ingrese la signatura topográfica del recurso: ")
+                    pos_recurso = self.buscar_recurso_por_signatura(signatura=signatura_para_busqueda)
+                    
+                    if (pos_recurso != -1):
+                        self.historial_prestamos_recurso(self.inventario_de_recursos[pos_recurso])
+                        input("Presione Enter para continuar...")
+                    else:
+                        input(f"El recurso con signatura topográfica {signatura_para_busqueda} no fue encontrado.\nPresione Enter para continuar...")
                 case 7:
-                    pass
-                case 8:
-                    print("Sesión cerrada.")
-                    self.usuario_autenticado = None
-                case 6:
-                    pass
-                case 7:
-                    pass
+                    id_para_busqueda = int
+                    id_para_busqueda = leer_entero_no_acotado("Escriba la ID del usuario al cual desea ver su historial de préstamos: ")
+                    pos_usuario = self.buscar_usuario_por_id(identificacion=id_para_busqueda)
+                    if (pos_usuario != -1):
+                        self.mostrar_historial_usuario(self.total_de_usuarios[pos_usuario])
+                        input("Presione Enter para continuar...")
+                    else:
+                        input(f"El usuario con ID {id_para_busqueda} no fue encontrado.\nPresione Enter para continuar...")
                 case 8:
                     print("Sesión cerrada.")
                     self.usuario_autenticado = None
@@ -973,11 +1035,19 @@ class Biblioteca:
                 case 2:
                     self.modificar_info_recurso()
                     ##PUNTO DE GUARDADO
-                    if (self.guardar_datos(self.inventario_de_recursos,self.ARCHIVO_RECURSOS)):
-                        print("Datos guardados exitosamente.")
+                    if (self.guardar_datos(self.prestamos_activos, self.ARCHIVO_PRESTAMOS_ACTIVOS)):
+                        if (self.guardar_datos(self.prestamos_inactivos, self.ARCHIVO_PRESTAMOS_INACTIVOS)):
+                            if (self.guardar_datos(self.total_de_usuarios, self.ARCHIVO_USUARIOS)):
+                                if (self.guardar_datos(self.inventario_de_recursos, self.ARCHIVO_RECURSOS)):
+                                    print("Datos guardados con éxito.")
+                                else:
+                                    print("Error: los datos no pudieron guardarse.")
+                            else:
+                                print("Error: los datos no pudieron guardarse.")
+                        else:
+                            print("Error: los datos no pudieron guardarse.")
                     else:
                         print("Error: los datos no pudieron guardarse.")
-                    
                     input("Presione Enter para continuar...")
                 case 3:
                     self.buscar_recurso()
@@ -1008,7 +1078,16 @@ class Biblioteca:
                                 print("El préstamo fue registrado exitosamente.")
                                 ##PUNTO DE GUARDADO
                                 if (self.guardar_datos(self.prestamos_activos, self.ARCHIVO_PRESTAMOS_ACTIVOS)):
-                                    print("Datos guardados con éxito.")
+                                    if (self.guardar_datos(self.prestamos_inactivos, self.ARCHIVO_PRESTAMOS_INACTIVOS)):
+                                        if (self.guardar_datos(self.total_de_usuarios, self.ARCHIVO_USUARIOS)):
+                                            if (self.guardar_datos(self.inventario_de_recursos, self.ARCHIVO_RECURSOS)):
+                                                print("Datos guardados con éxito.")
+                                            else:
+                                                print("Error: los datos no pudieron guardarse.")
+                                        else:
+                                            print("Error: los datos no pudieron guardarse.")
+                                    else:
+                                        print("Error: los datos no pudieron guardarse.")
                                 else:
                                     print("Error: los datos no pudieron guardarse.")
                                 
@@ -1046,9 +1125,24 @@ class Biblioteca:
                     else:
                         input(f"El usuario con ID {id_para_busqueda} no fue encontrado.\nPresione Enter para continuar...")
                 case 6:
-                    pass
+                    pos_recurso = int
+                    signatura_para_busqueda = verificar_cadena_alfanumerica("Ingrese la signatura topográfica del recurso: ")
+                    pos_recurso = self.buscar_recurso_por_signatura(signatura=signatura_para_busqueda)
+                    
+                    if (pos_recurso != -1):
+                        self.historial_prestamos_recurso(self.inventario_de_recursos[pos_recurso])
+                        input("Presione Enter para continuar...")
+                    else:
+                        input(f"El recurso con signatura topográfica {signatura_para_busqueda} no fue encontrado.\nPresione Enter para continuar...")
                 case 7:
-                    pass
+                    id_para_busqueda = int
+                    id_para_busqueda = leer_entero_no_acotado("Escriba la ID del usuario al cual desea ver su historial de préstamos: ")
+                    pos_usuario = self.buscar_usuario_por_id(identificacion=id_para_busqueda)
+                    if (pos_usuario != -1):
+                        self.mostrar_historial_usuario(self.total_de_usuarios[pos_usuario])
+                        input("Presione Enter para continuar...")
+                    else:
+                        input(f"El usuario con ID {id_para_busqueda} no fue encontrado.\nPresione Enter para continuar...")
                 case 8:
                     if (self.numero_de_usuarios < self.MAX_USUARIOS):
                         print("********\nREGISTRO\n********")
@@ -1084,9 +1178,18 @@ class Biblioteca:
                         if (self.modificar_usuario(self.total_de_usuarios[pos_usuario])):
                             print("Información modificada con éxito.")
 
-                            ###PUNTO DE GUARDADO
-                            if (self.guardar_datos(self.total_de_usuarios, self.ARCHIVO_USUARIOS)):
-                                print("Datos guardados con éxito.")
+                            ##PUNTO DE GUARDADO
+                            if (self.guardar_datos(self.prestamos_activos, self.ARCHIVO_PRESTAMOS_ACTIVOS)):
+                                if (self.guardar_datos(self.prestamos_inactivos, self.ARCHIVO_PRESTAMOS_INACTIVOS)):
+                                    if (self.guardar_datos(self.total_de_usuarios, self.ARCHIVO_USUARIOS)):
+                                        if (self.guardar_datos(self.inventario_de_recursos, self.ARCHIVO_RECURSOS)):
+                                            print("Datos guardados con éxito.")
+                                        else:
+                                            print("Error: los datos no pudieron guardarse.")
+                                    else:
+                                        print("Error: los datos no pudieron guardarse.")
+                                else:
+                                    print("Error: los datos no pudieron guardarse.")
                             else:
                                 print("Error: los datos no pudieron guardarse.")
                             
@@ -1099,13 +1202,22 @@ class Biblioteca:
                     pos_usuario = int
                     id_para_busqueda = leer_entero_no_acotado("Ingrese la ID del usuario que desea eliminar: ")
                     pos_usuario = self.buscar_usuario_por_id(identificacion=id_para_busqueda)
-                    if (pos_usuario != -1):
+                    if (pos_usuario != -1 and self.usuario_autenticado.id != self.total_de_usuarios[pos_usuario].id):
                         if (self.eliminar_usuario(self.total_de_usuarios[pos_usuario], pos_usuario)):
                             print("Información modificada con éxito.")
 
                             ###PUNTO DE GUARDADO
-                            if (self.guardar_datos(self.total_de_usuarios, self.ARCHIVO_USUARIOS)):
-                                print("Datos guardados con éxito.")
+                            if (self.guardar_datos(self.prestamos_activos, self.ARCHIVO_PRESTAMOS_ACTIVOS)):
+                                if (self.guardar_datos(self.prestamos_inactivos, self.ARCHIVO_PRESTAMOS_INACTIVOS)):
+                                    if (self.guardar_datos(self.total_de_usuarios, self.ARCHIVO_USUARIOS)):
+                                        if (self.guardar_datos(self.inventario_de_recursos, self.ARCHIVO_RECURSOS)):
+                                            print("Datos guardados con éxito.")
+                                        else:
+                                            print("Error: los datos no pudieron guardarse.")
+                                    else:
+                                        print("Error: los datos no pudieron guardarse.")
+                                else:
+                                    print("Error: los datos no pudieron guardarse.")
                             else:
                                 print("Error: los datos no pudieron guardarse.")
                             
@@ -1113,7 +1225,7 @@ class Biblioteca:
                         else:
                             input("Presione Enter para continuar...")
                     else:
-                        input("El usuario no fue encontrado.\nPresione Enter para continuar...")
+                        input("El usuario no fue encontrado o la ID coincide con el usuario autenticado.\nPresione Enter para continuar...")
                 case 11:
                     pass
                 case 12:
@@ -1146,35 +1258,132 @@ class Biblioteca:
         
         usuario_a_eliminar.mostrar_informacion()
 
-        #Si no se encuentra al usuario, retornar la variable eliminacion_exitosa que almacena el valor de False
-        if (pos == -1):
+    #Se verifica que el usuario no tenga multas activas, en caso de que tenga retornar la variable eliminacion_exitosa que almacena el valor de False
+        if (usuario_a_eliminar.numero_de_multas == 0):
+            #Se verifica que el usuario no tenga prestamos activos, en caso de que los tenga retornar la variable eliminacion_exitosa que almacena el valor de False
+            for i in range(self.numero_de_prestamos_activos):
+                if (usuario_a_eliminar.id == self.prestamos_activos[i].titular_del_prestamo.id):
+                    print("No se puede eliminar al usuario debido a que tiene prestamos activos")
+                    return eliminacion_exitosa
+
+            #Si el usuario cumple con las condiciones para ser eliminado, se usa un ciclo para mover los usuarios almacenados en el array hacia la izquierda
+            for i in range(pos + 1, self.numero_de_usuarios):
+                self.total_de_usuarios[i - 1] = self.total_de_usuarios[i]
+
+            #Se asigna el valor de None al usuario en la posicion numero_de_usuarios - 1 del arreglo total de usuarios
+            self.total_de_usuarios[self.numero_de_usuarios - 1] = None
+            self.numero_de_usuarios -= 1
+            eliminacion_exitosa = True
+            return True
+        else:
+            print("El usuario no puede eliminarse porque tiene multas activas")
             return eliminacion_exitosa
         
-        #Se verifica que la posición sea diferente de -1, en caso de que sea -1 retornar la variable eliminacion_exitosa que almacena el valor de False
-        if (pos != -1):
-            #Se verifica que el usuario no tenga multas activas, en caso de que tenga retornar la variable eliminacion_exitosa que almacena el valor de False
-            if (usuario_a_eliminar.numero_de_multas == 0):
-                #Se verifica que el usuario no tenga prestamos activos, en caso de que los tenga retornar la variable eliminacion_exitosa que almacena el valor de False
-                for i in range(self.numero_de_prestamos_activos):
-                    if (usuario_a_eliminar.id == self.prestamos_activos[i].titular_del_prestamo.id):
-                        print("No se puede eliminar al usuario debido a que tiene prestamos activos")
-                        return eliminacion_exitosa
+    def historial_prestamos_recurso(self, recurso:Recurso):
+        """
+        Este método muestra el historial de préstamos de un recurso 
+        en específicico
+        Este método da solución al requerimiento 7 del análisis del problema.
 
-                #Si el usuario cumple con las condiciones para ser eliminado, se usa un ciclo para mover los usuarios almacenados en el array hacia la izquierda
-                for i in range(pos + 1, self.numero_de_usuarios):
-                    self.total_de_usuarios[i - 1] = self.total_de_usuarios[i]
+        PARÁMETEROS:
+        recurso = Recurso (Recurso del cuál queremos mostrar su historial, esto por medio de su signatura topográfica)
 
-                #Se asigna el valor de None al usuario en la posicion numero_de_usuarios - 1 del arreglo total de usuarios
-                self.total_de_usuarios[self.numero_de_usuarios - 1] = None
-                self.numero_de_usuarios -= 1
-                eliminacion_exitosa = True
-                return True
-            else:
-                print("El usuario tiene multas activas")
-                return eliminacion_exitosa
+        RETORNO:
+        Vacío
+
+        Autor: Mateo Daniel Galeano Quiñones 02/07/2025
+        """
+
+        print("*"*32)
+        print("HISTORIAL DE PRÉSTAMOS DEL RECURSO")
+        print("*"*32)
+
+        i = int
+        #Se recorre el arreglo de préstamos activos y se muestra la información del préstamo con la misma signatura topográfica del recurso ingresado
+        for i in range(self.numero_de_prestamos_activos):
+            if (recurso.signatura_topografica == self.prestamos_activos[i].recurso_prestado.signatura_topografica):
+                self.prestamos_activos[i].mostrar_informacion(para_el_usuario = False)
+                print("En prestamo actualmente\n") #Se indica que el recurso está en préstamo actualmente
+
+        #Se recorre el arreglo de préstamos inactivos y se muestra la información de los préstamos con la misma signatura topográfica del recurso ingresado
+        for i in range(self.numero_de_prestamos_inactivos, 0, -1):
+            if (self.prestamos_inactivos[i] != None):
+                if (recurso.signatura_topografica == self.prestamos_inactivos[i].recurso_prestado.signatura_topografica):
+                    self.prestamos_inactivos[i].mostrar_informacion(para_el_usuario = False)
+                    print("\n")
+
+    def mostrar_historial_usuario (self, user:Usuario):
+        """
+            Este método permite mostrar el historial de préstamos de un usuario.
+            Este método da solución al requerimiento 8 del análisis del problema.
+
+            PARÁMETEROS:
+            user: Usuario cuyo historial de préstamos será mostrado.
+
+            RETORNO:
+            Ninguno.
+
+            Autor: Daniel Sánchez Escobar 1/07/2025
+        """
+        #variables
+        usuario = user
+        numero_de_prestamos = int
+        numero_de_prestamos = 0
+        i = int
+        sign_recursos_con_multa = np.ndarray
+
+        #Se verifica si el usuario tiene multas activas
+        if (usuario.numero_de_multas > 0):
+            #Se crea un arreglo auxiliar donde se guardarán las signaturas de los recursos con los que el usuario tiene multa activa.
+            sign_recursos_con_multa = np.full((usuario.numero_de_multas), fill_value="",dtype=object)
+
+            for i in range (len(sign_recursos_con_multa)):
+                sign_recursos_con_multa[i] = usuario.multas_vigentes[i].recurso_con_multa.signatura_topografica
+            
+            #Una vez llenado, se comienza el recorrido del arreglo de préstamos inactivos
+            for i in range((self.numero_de_prestamos_inactivos-1),-1,-1):
+                if(self.prestamos_inactivos[i].titular_del_prestamo.id == usuario.id):
+
+                    #Muestra la info. normal del préstamo
+                    self.prestamos_inactivos[i].mostrar_informacion()
+                    #Aumenta el contador
+                    numero_de_prestamos += 1
+
+                    """Se verifica si el préstamo que se está analizando tiene como recurso asociado
+                    aquel con signatura topográfica igual a alguna de las signaturas almacenadas
+                    en el arreglo auxiliar de recursos asociados a las multas activas del usuario"""
+                    for j in range(len(sign_recursos_con_multa)):
+                        if (self.prestamos_inactivos[i].recurso_prestado.signatura_topografica == sign_recursos_con_multa[j]):
+                            #Busca la multa que está asociada a ese recurso
+                            
+                            #Si se da el caso de que la signatura del recurso está incluida en el arreglo auxiliar
+                            #Se busca la multa asociada y se muestra su valor adeudado como información adicional
+                            for k in range(usuario.numero_de_multas):
+                                if (usuario.multas_vigentes[k].recurso_con_multa.signatura_topografica == self.prestamos_inactivos[i].recurso_prestado.signatura_topografica):
+                                    print(f"Valor adeudado por multa: ${usuario.multas_vigentes[k].valor_adeudado}")
+                                    break
+                            
+                            #Una vez mostrado el valor adeudado de la multa, se elimina la signatura del arreglo auxiliar
+                            """El objetivo detrás de eliminar la signatura del arreglo auxiliar radica en
+                            evitar que, si el usuario tiene varios préstamos devueltos sobre el mismo recurso,
+                            no se reflejen multas sobre esos préstamos pasados"""
+                            sign_recursos_con_multa[j] = ""
+                            break
+            
+            if (numero_de_prestamos == 0):
+                print("El historial de préstamos de este usuario se encuentra vacío actualmente.")
         else:
-            print("El usuario no fue encontrado")
-            return eliminacion_exitosa
+            #Si el usuario no tiene multas, se muestran los préstamos a su nombre
+            #Se recorre el arreglo de préstamos inactivos, de derecha a izquierda
+            for i in range((self.numero_de_prestamos_inactivos - 1), -1, -1):
+                #Se verifica si el préstamo inactivo tiene como titular al usuario, si se cumple, se muestra:
+                if (self.prestamos_inactivos[i].titular_del_prestamo.id == usuario.id):
+                    self.prestamos_inactivos[i].mostrar_informacion()
+                    numero_de_prestamos += 1
+            
+            #Si al finalizar el recorrido, el contador permanece en cero, entonces el historial está vacío
+            if (numero_de_prestamos == 0):
+                print("El historial de préstamos de este usuario se encuentra vacío actualmente.")
 
     def modificar_usuario (self, user:Usuario, modificacion_de_administrador = True):
         """
@@ -1522,7 +1731,7 @@ class Biblioteca:
                         self.inventario_de_recursos[i].estado = "DISPONIBLE"
                         break
 
-            arr_aux[decision].fecha_de_devolucion = date.today() #Se genera la fecha de devolución
+            arr_aux[decision].fecha_de_devolucion = date(2027, 2, 2) #Se genera la fecha de devolución
 
             #Seguidamente, el préstamo debe ser transferido al arreglo de préstamos inactivos.
 

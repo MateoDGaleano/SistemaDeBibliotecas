@@ -41,7 +41,7 @@ class Recurso: #CLASE PADRE RECURSO
         print(f"Título: {self.titulo}")
         print(f"Colección: {self.coleccion}")
         print(f"Estado: {self.estado}")
-        print(f"Signatura tpográfica: {self.signatura_topografica}")
+        print(f"Signatura topográfica: {self.signatura_topografica}")
 
         
     #MÉTODO PARA PEDIR LA INFORMACIÓN DEL RECURSO
