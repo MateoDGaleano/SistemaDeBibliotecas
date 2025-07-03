@@ -1306,7 +1306,7 @@ class Biblioteca:
                 print("En prestamo actualmente\n") #Se indica que el recurso está en préstamo actualmente
 
         #Se recorre el arreglo de préstamos inactivos y se muestra la información de los préstamos con la misma signatura topográfica del recurso ingresado
-        for i in range(self.numero_de_prestamos_inactivos, 0, -1):
+        for i in range(self.numero_de_prestamos_inactivos - 1, -1, -1):
             if (self.prestamos_inactivos[i] != None):
                 if (recurso.signatura_topografica == self.prestamos_inactivos[i].recurso_prestado.signatura_topografica):
                     self.prestamos_inactivos[i].mostrar_informacion(para_el_usuario = False)
