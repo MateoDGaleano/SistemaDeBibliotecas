@@ -838,8 +838,8 @@ class Biblioteca:
     def mostrar_menu_usuario_estudiante_y_empleado (self):
         decision = int
         decision = 0
-        while (decision != 5):
-            decision = leer_entero(1, 5, "**************\nMENÚ\n**************\nSeleccione una opción:\n1.Consultar y buscar recursos.\n2.Modificar datos personales.\n3.Devolver un recurso.\n4.Verificar historial de préstamos.\n5.Cerrar sesión y regresar al menú principal.")
+        while (decision != 4):
+            decision = leer_entero(1, 4, "**************\nMENÚ\n**************\nSeleccione una opción:\n1.Consultar y buscar recursos.\n2.Modificar datos personales.\n3.Verificar historial de préstamos.\n4.Cerrar sesión y regresar al menú principal.")
             match decision:
                 case 1:
                     self.buscar_recurso()
@@ -866,11 +866,9 @@ class Biblioteca:
                     else:
                         input("La información no pudo modificarse.\nPresione Enter para continuar...")
                 case 3:
-                    pass
-                case 4:
                     self.mostrar_historial_usuario(self.usuario_autenticado)
                     input("Presione Enter para continuar...")
-                case 5:
+                case 4:
                     print("Sesión cerrada.")
                     self.usuario_autenticado = None
 
@@ -1013,8 +1011,8 @@ class Biblioteca:
     def mostrar_menu_administrador (self):
         decision = int
         decision = 0
-        while (decision != 12):
-            decision = leer_entero(1, 12, "**************\nMENÚ-ADMINISTRADOR\n**************\nSeleccione una opción:\n1.Registrar recurso.\n2.Modificar recurso.\n3.Buscar recurso.\n4.Registrar préstamo.\n5.Registrar devolución.\n6.Consultar el historial de préstamos de un recurso.\n7.Consultar el historial de préstamos de un usuario.\n8.Agregar usuario.\n9.Modificar usuario.\n10.Eliminar usuario.\n11.Generar reportes del sistema.\n12.Cerrar sesión y salir.")
+        while (decision != 13):
+            decision = leer_entero(1, 13, "**************\nMENÚ-ADMINISTRADOR\n**************\nSeleccione una opción:\n1.Registrar recurso.\n2.Modificar recurso.\n3.Buscar recurso.\n4.Registrar préstamo.\n5.Registrar devolución.\n6.Consultar el historial de préstamos de un recurso.\n7.Consultar el historial de préstamos de un usuario.\n8.Agregar usuario.\n9.Modificar usuario.\n10.Eliminar usuario.\n11.Generar reportes de usuarios morosos\n12.Generar Top 5 de recursos más prestados.\n13.Cerrar sesión y salir.")
             match decision:
                 case 1:
                     if (self.numero_de_recursos < self.MAX_RECURSOS):
@@ -1227,8 +1225,12 @@ class Biblioteca:
                     else:
                         input("El usuario no fue encontrado o la ID coincide con el usuario autenticado.\nPresione Enter para continuar...")
                 case 11:
-                    pass
+                    self.generar_reporte_usuarios_morosos()
+                    input("Presione Enter para continuar...")
                 case 12:
+                    self.generar_top_5_recursos_prestados()
+                    input("Presione Enter para continuar...")
+                case 13:
                     print("Sesión cerrada.")
                     self.usuario_autenticado = None
 
@@ -1248,35 +1250,53 @@ class Biblioteca:
         Autor: Mateo Daniel Galeano Quiñones 30/06/2025
         """
 
-        print("*"*32)
+        print("*"*16)
         print("ELIMINAR USUARIO")
-        print("*"*32)
+        print("*"*16)
 
         usuario_a_eliminar = user
         i = int
         eliminacion_exitosa = False
         
+        #Primero, se muestra la información del usuario.
         usuario_a_eliminar.mostrar_informacion()
 
-    #Se verifica que el usuario no tenga multas activas, en caso de que tenga retornar la variable eliminacion_exitosa que almacena el valor de False
+        #Se verifica que el usuario no tenga multas activas, en caso de que tenga retornar la variable eliminacion_exitosa que almacena el valor de False
         if (usuario_a_eliminar.numero_de_multas == 0):
             #Se verifica que el usuario no tenga prestamos activos, en caso de que los tenga retornar la variable eliminacion_exitosa que almacena el valor de False
             for i in range(self.numero_de_prestamos_activos):
                 if (usuario_a_eliminar.id == self.prestamos_activos[i].titular_del_prestamo.id):
-                    print("No se puede eliminar al usuario debido a que tiene prestamos activos")
+                    print("No se puede eliminar al usuario debido a que tiene préstamos activos.")
                     return eliminacion_exitosa
 
-            #Si el usuario cumple con las condiciones para ser eliminado, se usa un ciclo para mover los usuarios almacenados en el array hacia la izquierda
+            
+            
+            #Si el usuario cumple con las condiciones para ser eliminado, se borran los préstamos inactivos a nombre del usuario:
+            i = 0
+            while (i <= (self.numero_de_prestamos_inactivos - 1)):
+                if (self.prestamos_inactivos[i].titular_del_prestamo.id == usuario_a_eliminar.id):
+                    self.prestamos_inactivos[i] = None
+                    for j in range ((i+1), self.numero_de_prestamos_inactivos):
+                        self.prestamos_inactivos[j-1] = self.prestamos_inactivos[j]
+
+                    self.prestamos_inactivos[self.numero_de_prestamos_inactivos - 1] = None
+                    self.numero_de_prestamos_inactivos -= 1
+                else:
+                    i += 1
+
+
             for i in range(pos + 1, self.numero_de_usuarios):
                 self.total_de_usuarios[i - 1] = self.total_de_usuarios[i]
 
             #Se asigna el valor de None al usuario en la posicion numero_de_usuarios - 1 del arreglo total de usuarios
             self.total_de_usuarios[self.numero_de_usuarios - 1] = None
             self.numero_de_usuarios -= 1
+
             eliminacion_exitosa = True
-            return True
+            print("Usuario eliminado exitosamente.")
+            return eliminacion_exitosa
         else:
-            print("El usuario no puede eliminarse porque tiene multas activas")
+            print("El usuario no puede eliminarse porque tiene multas activas.")
             return eliminacion_exitosa
         
     def historial_prestamos_recurso(self, recurso:Recurso):
@@ -1298,7 +1318,12 @@ class Biblioteca:
         print("HISTORIAL DE PRÉSTAMOS DEL RECURSO")
         print("*"*32)
 
+        contador_de_prestamos = int
+        contador_de_prestamos = 0
         i = int
+        #Se muestra la información del recurso
+        recurso.mostrar_informacion()
+
         #Se recorre el arreglo de préstamos activos y se muestra la información del préstamo con la misma signatura topográfica del recurso ingresado
         for i in range(self.numero_de_prestamos_activos):
             if (recurso.signatura_topografica == self.prestamos_activos[i].recurso_prestado.signatura_topografica):
@@ -1310,7 +1335,11 @@ class Biblioteca:
             if (self.prestamos_inactivos[i] != None):
                 if (recurso.signatura_topografica == self.prestamos_inactivos[i].recurso_prestado.signatura_topografica):
                     self.prestamos_inactivos[i].mostrar_informacion(para_el_usuario = False)
+                    contador_de_prestamos += 1
                     print("\n")
+                
+        if (contador_de_prestamos == 0):
+            print("El historial de préstamos de este recurso se encuentra actualmente vacío.")
 
     def mostrar_historial_usuario (self, user:Usuario):
         """
@@ -1731,7 +1760,7 @@ class Biblioteca:
                         self.inventario_de_recursos[i].estado = "DISPONIBLE"
                         break
 
-            arr_aux[decision].fecha_de_devolucion = date(2027, 2, 2) #Se genera la fecha de devolución
+            arr_aux[decision].fecha_de_devolucion = date.today() #Se genera la fecha de devolución
 
             #Seguidamente, el préstamo debe ser transferido al arreglo de préstamos inactivos.
 
@@ -1801,6 +1830,101 @@ class Biblioteca:
             return True
         else:
             return False
+
+    def generar_reporte_usuarios_morosos(self):
+        """
+        Este método muestra los usuarios morosos 
+        
+        Este método da solución al requerimiento 12 del análisis del problema.
+
+        PARÁMETEROS:
+        Ninguno
+
+        RETORNO:
+        Vacío
+
+        Autor: Daniel Sánchez Escobar 02/07/2025
+        """
+
+        i = int
+        dias_de_mora = int
+        numero_de_usuarios_morosos = int
+        numero_de_usuarios_morosos = 0
+
+        for i in range(self.numero_de_prestamos_activos):
+            if (self.prestamos_activos[i].verificar_dias_de_mora(date.today()) != 0):
+                dias_de_mora = self.prestamos_activos[i].verificar_dias_de_mora(date.today())
+                print(f"Nombre del titular: {self.prestamos_activos[i].titular_del_prestamo.nombre_usuario}")
+                print(f"ID del titular: {self.prestamos_activos[i].titular_del_prestamo.id}")
+                print(f"Recurso: {self.prestamos_activos[i].recurso_prestado.titulo}")
+                print(f"Signatura topográfica: {self.prestamos_activos[i].recurso_prestado.signatura_topografica}")
+                print(f"Días de mora: {dias_de_mora} | Valor adeudado: ${dias_de_mora * 1000}")
+                numero_de_usuarios_morosos += 1
+
+        if (numero_de_usuarios_morosos == 0):
+            print("Actualmente no hay usuarios morosos.")
+
+    def generar_top_5_recursos_prestados(self):
+        """
+            Este método permite generar un reporte del top 5 de recursos más prestados de la biblioteca,
+            muestra el nombre del recurso, número de inventario y el número de veces prestado.
+            Este método permite dar solución al requerimiento 11 del análisis del problema.
+
+            PARÁMETEROS:
+            NINGUNO
+
+            RETORNO:
+            NINGUNO
+
+            Autor: Daniel Sánchez Escobar 3/07/2025
+        """
+        #Variables
+        arr_recursos_copia = np.ndarray
+        contador = np.ndarray
+        veces_prestado = int
+        #Se verifica que el arreglo de recursos si tenga recursos registrados
+        if (self.numero_de_recursos > 0):
+            arr_recursos_copia = self.inventario_de_recursos.copy()
+            contador = np.full((len(arr_recursos_copia)), fill_value=0,dtype=int)
+
+            for i in range(len(arr_recursos_copia)):
+                if (arr_recursos_copia[i] != None):
+                    veces_prestado = 0
+
+                    for j in range (self.numero_de_prestamos_activos):
+                        if (self.prestamos_activos[j].recurso_prestado.signatura_topografica == arr_recursos_copia[i].signatura_topografica):
+                            veces_prestado += 1
+                    
+                    for j in range (self.numero_de_prestamos_inactivos):
+                        if (self.prestamos_inactivos[j].recurso_prestado.signatura_topografica == arr_recursos_copia[i].signatura_topografica):
+                            veces_prestado += 1
+                    
+                    contador[i] = veces_prestado
+            
+            #Una vez terminado el conteo, se organizan los arreglos por selección
+            for i in range (len(contador)-1):
+                for j in range((i+1), len(contador)):
+                    if (contador[i] < contador[j]):
+                        aux = contador[i]
+                        contador[i] = contador[j]
+                        contador[j] = aux
+
+                        aux = arr_recursos_copia[i]
+                        arr_recursos_copia[i] = arr_recursos_copia[j]
+                        arr_recursos_copia[j] = aux
+            
+            #Finalmente, se muestran los primeros 5 recursos
+
+            i = 0
+            while (i <= 4):
+                if (arr_recursos_copia[i] != None):
+                    print("*************************************************************")
+                    print(f"Número de inventario: {arr_recursos_copia[i].num_inventario}")
+                    print(f"Título: {arr_recursos_copia[i].titulo}")
+                    print(f"Veces prestado: {contador[i]}")
+                i+=1
+        else:
+            print("Actualmente no hay recursos registrados en la biblioteca.")
 
     def buscar_usuario_por_id (self, identificacion):
         """
